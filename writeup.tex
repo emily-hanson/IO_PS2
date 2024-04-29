@@ -7,6 +7,7 @@
 \linespread{1.25}
 \usepackage{enumerate, titling}
 \usepackage{color,xcolor}
+\usepackage[flushleft]{threeparttable}
 \usepackage{amsmath, graphicx, hyperref, lipsum}
 \hypersetup{
     colorlinks=true,
@@ -48,6 +49,37 @@ Data Discription: Emily
 Industry: ????
 
 \section{Model and Results}
+
+
+\begin{table}[h]  
+\begin{threeparttable}
+\caption{Market and Businesses Counts} % title name of the table  
+\centering % centering table  
+\begin{tabular}{l c c } % creating 10 columns  
+\hline\hline   
+ Geography & Population Centres & Veterinarian Businesses   
+\\ [0.5ex]  
+\hline   
+% Entering 1st row  
+Canadian Provinces & 1014 & 1929 \\
+Within CSA or surrounding 20km & 737 & 1573 \\
+Within 10km of other Population Centre & 42 & 16 \\
+Remaining Population Centres & 235 & 114 \\
+
+Remaining PCs and surrounding 1km* & 235 & 186 \\
+
+Remaining PCs and surrounding 2km  & 235 & 200 \\
+
+Remaining PCs and surrounding 5km  & 235 & 209 \\
+
+% [1ex] adds vertical space  
+\hline % inserts single-line  
+\end{tabular}  
+\begin{tablenotes}
+    \small  *This set of population centres including 186 veterinarian businesses was chosen for analysis. 
+\end{tablenotes}
+\end{threeparttable}
+\end{table}  
 
 Model and Results: ????
 
