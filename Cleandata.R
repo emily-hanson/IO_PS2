@@ -9,6 +9,9 @@
 folder <- "/home/emilyhanson/Desktop/Io_PS2/Data/"
 
 library(tidyverse)
+library(tidyverse)
+library(ggplot2)
+library(sf)
 sf_use_s2(FALSE) #helps st_intersection not throw errors
 
 
@@ -176,6 +179,7 @@ markets_desired <- markets_desired%>% st_buffer(1000) %>%
            sapply(function(x) x%>%length))
 
 ##------My Market should now have all the data needed for market analysis
+write_rds(markets_desired, '/home/emilyhanson/Desktop/Io_PS2/Markets_Data.rds')
 
 
 ## ------------------------------------------ Checks, Excluded Market Statistics, Pretty Pictures ------------------------------------- ##-----
@@ -192,16 +196,28 @@ count_est_exclude2 <- markets_exclude%>%
 count_est_exclude2 <- length(count_est_exclude2[[1]])
 
 # count est outside CMA buffer and outside my markets 
-nrow(estab_sf) - count_est_exclude1 - count_est_exclude2 - length(markets_desired$numberOfEstablishments_1kmBuffer)
+nrow(estab_sf) - count_est_exclude1 - count_est_exclude2 - sum(markets_desired$numberOfEstablishments_1kmBuffer)
+
+# Count markets excluded by reason 
+markets_exclude%>%group_by(exclude_reason)%>%summarise(n(), nrow({.}))
+
+# alt buffers 
+markets_desired <- markets_desired%>% st_buffer(2000) %>%
+  mutate(numberOfEstablishments_2kmBuffer = st_intersects({.},estab_sf)%>%
+           sapply(function(x) x%>%length))
+
+markets_desired <- markets_desired%>% st_buffer(5000) %>%
+  mutate(numberOfEstablishments_5kmBuffer = st_intersects({.},estab_sf)%>%
+           sapply(function(x) x%>%length))
+
 
 geo_prov%>%
   filter(PRUID < 60)%>%
   ggplot()+
   geom_sf()+
   geom_sf(data = markets_desired%>%
-            mutate(numberOfVets= factor(numberOfEstablishments)),
-          aes(col = numberOfVets), size = 2)+
-  geom_sf(data = markets_exclude,
-          size = 2)
+            mutate(Veterinarians= factor(numberOfEstablishments)),
+          aes(col = Veterinarians), size = 2) 
+
 
 
