@@ -9,6 +9,7 @@ File Directory:
     Data:  
         Vet_Data_canada.rds  
         Vet_Data_ONsubset.rts
+        Markets_Data.rts
     Latex Files:  
         writeup.tex  
         moonoply.bib   
@@ -30,6 +31,7 @@ Accessing Online Files:
 Code Structure  
   
 Getdata_nokey.R is code that calls the Google API to pull a list of all establishments  
+    - Produces: Vet_Data_canada.rds   
     - To run yourself you would have to set up a google API key which is connected to a billing source   
     - The code creates a rectangular grid of lat long points across canada's provinces  
     - Then I use the shapefile of provinces to remove points in the US or in territories     
@@ -37,6 +39,7 @@ Getdata_nokey.R is code that calls the Google API to pull a list of all establis
     - There are a total of 3251 of these points  
 
 Cleandata.R takes output from Getdata.R, combines it with various statistics canada shape files, and market characteristics at the population center level  
+    - Produces: Markets_Data.rts
     - Define Market  
         -  A Population center (i.e. a contiguous area with a population density of 400 person per square km and with a population 1,000 or more)   
             plus a 1 km buffer around the population center
