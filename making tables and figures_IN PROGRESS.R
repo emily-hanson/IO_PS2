@@ -146,6 +146,9 @@ paramLocations <- 1:length(initParams)%>%
 params <- unlist(initParams)
 
 #I can only get it to run when we cap n at 2, and I use Nelder-Mead
+#NOTE: in original paper, I do not know how they handled the W variables in their table
+#W can show up in V or F, and so should have a gamma_l and beta coef 
+#but their W variable LANDV is only reported with a gamma_l
 results <- optim(params, logLikelihood, data = df, method = "Nelder-Mead", hessian = TRUE,
                  control = list(abstol = .00000025,
                                 maxit = 500,
@@ -155,15 +158,29 @@ results <- optim(params, logLikelihood, data = df, method = "Nelder-Mead", hessi
 
 
 
-results$hessian
 
 
 
+
+
+
+
+
+
+
+#table 5 (entry threshold estimates and likelihood ratio tests for threshold proportionality)
+#figure 4 S_nMax/S_n vs N plot
+#table 6 likelihood ratio tests for equal fixed costs 
+#table 7 likelihood ratio exclusion tests for the market size regressors 
+#table 8 likelihood ratio exclusion tests for the variable profits regressors 
+#table 9 entry threshold for alternate market definitions 
 
 
 #figure 2
-dfOg%>%
-  count(popRange = round(2*get(popVar) / 1000)/2)%>%
+figure2Data <- dfOg%>%
+  count(popRange = round(2*get(popVar) / 1000)/2)
+
+figure2 <- figure2Data%>%
   ggplot(aes(x = popRange, y = n))+
   geom_col(fill = 'black')+
   theme_minimal()+
@@ -171,23 +188,31 @@ dfOg%>%
        x = 'Town Population Range (000s)',
        caption = 'each town is at least 1k, bins are increments of 500')
 
+figure2
+
 #table 2 as a chart
-dfOg%>%
-  count(nIncumbents = get(nVar))%>%
+table2Data <- dfOg%>%
+  count(nIncumbents = get(nVar))
+
+table2Figure <- table2Data%>%
   ggplot(aes(x = nIncumbents, y = n))+
   geom_col(fill = 'black')+
   theme_minimal()+
   labs(y = 'Number of Towns',
        x = 'Number of Establishments')
 
+table2Figure
+
 #figure 3
-dfOg%>%
+figure3Data <- dfOg%>%
   count(popRange = round(get(popVar) / 1000),
         nIncumbents = factor(get(nVar), 
                              levels = get(nVar)%>%
                                unique%>%
                                sort%>%
-                               rev))%>%
+                               rev))
+
+figure3 <- figure3Data%>%
   ggplot(aes(x = popRange, y = n, fill = nIncumbents))+
   geom_col()+
   theme_minimal()+
@@ -196,9 +221,11 @@ dfOg%>%
        x = 'Town Population Range (000s)',
        caption = 'each town is at least 1k, bins are increments of 1k')
 
+figure3
+
 #table 3 data
-dfOg%>%
-  summarise(across(all_of(c(nVar, yVars, wVars, zVars)),
+table3Data <- dfOg%>%
+  summarise(across(all_of(unique(c(nVar, yVars, wVars, zVars))),
                    list(mean = ~mean(.),
                         stDev = ~sd(.),
                         min = ~min(.),
@@ -207,9 +234,51 @@ dfOg%>%
   separate(name, c('variable', 'summary'), sep = '__')%>%
   pivot_wider(names_from = summary, values_from = value)
 
+#table 4 (results under baseline spec)
 
+table4Data <- data.frame(term = c(yVars[-1],
+                                  c(wVars, zVars),
+                                  wVars,
+                                  'V_1 (a_1)',
+                                  'F_1 (g_1)',
+                                  2:nMax%>%
+                                    paste0('V_', .-1, ' - V_', ., ' (a_', ., ')'),
+                                  2:nMax%>%
+                                    paste0('F_', ., ' - F_', .-1, ' (g_', ., ')')),
+                         value = results$par,
+                         se = results$hessian%>%
+                           diag%>%
+                           sqrt)%>%
+  rownames_to_column('regTerm')
 
-
+#table5a entry threshold estimates 
+table5aData <- (1:nMax)%>%
+  map_dfr(function(n){
+    
+    num <- table3Data%>%
+      inner_join(table4Data%>%
+                   filter(str_detect(regTerm, 'gamma'))%>%
+                   mutate(wVar = TRUE),
+                 by = c('variable' = 'term'))%>%
+      summarise(numerator = sum(value * mean) + table4Data$value[table4Data$regTerm == 'gamma_n1'])
+    
+    if(n > 1) num <- num + sum(table4Data$value[str_detect(table4Data$regTerm, 'gamma_n[^1][0-9]*$')])
+    
+    den <- table3Data%>%
+      inner_join(table4Data%>%
+                   filter(str_detect(regTerm, 'beta'))%>%
+                   mutate(xVar = TRUE),
+                 by = c('variable' = 'term'))%>%
+      summarise(denominator = sum(value * mean) + table4Data$value[table4Data$regTerm == 'alpha1'])
+    
+    if(n > 1) den <- den - sum(table4Data$value[str_detect(table4Data$regTerm, 'alpha[^1][0-9]*$')])
+    
+    data.frame(N = n,
+               num = num$numerator,
+               den = den$denominator)
+    
+  })%>%
+  mutate(S_n = num / den)
 
 
 
