@@ -66,7 +66,7 @@ profitFun <- function(w, y, z, lambda, beta, gamma_L, alpha, gamma_n, n){
 
 #the likelihood is ripped from the paper as well. I had to add in a little bump when zeroes happened since for any
 #initial parameters there would only be probabilities of one or zero which was problematic for taking logs 
-logLikelihood <- function(data, params){
+logLikelihood_constrained <- function(data, params, nFrom){
   
   W <- data[,wVars]%>%
     data.matrix()
@@ -98,10 +98,10 @@ logLikelihood <- function(data, params){
                                  gamma_L,#matrix(rep(.001, 1), nrow = 1),
                                  alpha,#matrix(rep(.001, 5), nrow = 5),
                                  gamma_n,#matrix(rep(.001, 5), nrow = 5),
-                                 .))
+                                 min(., nFrom)))
   
   ll <- cbind(1 - pnorm(pi_n[[1]], lower.tail = FALSE),
-              map(1:(nMax - 1), ~ (pnorm(pi_n[[.]], lower.tail = FALSE) - pnorm(pi_n[[. + 1]], lower.tail = FALSE))[,1])%>%
+              map(1:max(c(1, (nFrom - 1))), ~ (pnorm(pi_n[[.]], lower.tail = FALSE) - pnorm(pi_n[[. + 1]], lower.tail = FALSE))[,1])%>%
                 simplify2array(),
               pnorm(pi_n[[nMax]], lower.tail = FALSE))
   
@@ -110,7 +110,7 @@ logLikelihood <- function(data, params){
     
     l <- ll[i,]
     
-    check <- which(l == 0)
+    check <- which(l < 0.00001)
     
     l[check] <- 0.0001
     
@@ -128,44 +128,38 @@ logLikelihood <- function(data, params){
   
 }
 
-#I initially set up initParams as a list, not knowing that optim() refused list inputs. The result is things are a little messier
-initParams <- list(lambda = rep(0, length(yVars) - 1),
-                   beta = rep(0, length(c(wVars, zVars))),
-                   gamma_L = rep(0, length(wVars)),
-                   alpha = rep(0, nMax),
-                   gamma_n = rep(0, nMax))
+#when nMax = allCoefsForN..., same as unconstrained (tested to verify - copy pasted to the bottom)
+results <- map(1:nMax,
+    function(allCoefsForNbeyondThisAreTheSame){
+  
+      #I initially set up initParams as a list, not knowing that optim() refused list inputs. The result is things are a little messier
+      initParams <- list(lambda = rep(0.01, length(yVars) - 1),
+                         beta = rep(0.01, length(c(wVars, zVars))),
+                         gamma_L = rep(0.01, length(wVars)),
+                         alpha = rep(0.01, allCoefsForNbeyondThisAreTheSame),
+                         gamma_n = rep(0.01, allCoefsForNbeyondThisAreTheSame))
+      
+      #part of the aforementioned messiness
+      paramLocations <- initParams%>%
+        map_dbl(~length(.))%>%
+        lag(default = 0)
+      
+      paramLocations <<- 1:length(initParams)%>%
+        map(function(i) (1:length(initParams[[i]])) + sum(paramLocations[1:i]))
+      
+      params <- unlist(initParams)
+      
+      results <- optim(params, logLikelihood_constrained, data = df, nFrom = allCoefsForNbeyondThisAreTheSame, method = "Nelder-Mead", hessian = TRUE,
+                       control = list(abstol = .000000025,
+                                      maxit = 50000,
+                                      reltol = 1e-11,
+                                      trace = 4,
+                                      ndeps = rep(.00001, length(params))))
+      results
+  
+})
 
-#part of the aforementioned messiness
-paramLocations <- initParams%>%
-  map_dbl(~length(.))%>%
-  lag(default = 0)
-
-paramLocations <- 1:length(initParams)%>%
-  map(function(i) (1:length(initParams[[i]])) + sum(paramLocations[1:i]))
-
-params <- unlist(initParams)
-
-#I can only get it to run when we cap n at 2, and I use Nelder-Mead
-#NOTE: in original paper, I do not know how they handled the W variables in their table
-#W can show up in V or F, and so should have a gamma_l and beta coef 
-#but their W variable LANDV is only reported with a gamma_l
-results <- optim(params, logLikelihood, data = df, method = "Nelder-Mead", hessian = TRUE,
-                 control = list(abstol = .00000025,
-                                maxit = 500,
-                                reltol = 1e-11,
-                                trace = 4,
-                                ndeps = rep(.0000001, length(params))))
-
-
-
-
-
-
-
-
-
-
-
+resultsUnconstrained <- results[[nMax]]
 
 
 #table 5 (entry threshold estimates and likelihood ratio tests for threshold proportionality)
@@ -245,8 +239,8 @@ table4Data <- data.frame(term = c(yVars[-1],
                                     paste0('V_', .-1, ' - V_', ., ' (a_', ., ')'),
                                   2:nMax%>%
                                     paste0('F_', ., ' - F_', .-1, ' (g_', ., ')')),
-                         value = results$par,
-                         se = results$hessian%>%
+                         value = resultsUnconstrained$par,
+                         se = resultsUnconstrained$hessian%>%
                            diag%>%
                            sqrt)%>%
   rownames_to_column('regTerm')
@@ -284,6 +278,151 @@ table5aData <- (1:nMax)%>%
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#old, but in case needed
+
+logLikelihood <- function(data, params){
+  
+  W <- data[,wVars]%>%
+    data.matrix()
+  
+  Y <- data[,yVars]%>%
+    data.matrix()
+  
+  Z <- data[,zVars]%>%
+    data.matrix()
+  
+  lambda <- matrix(c(1, params[paramLocations[[1]]]), 
+                   nrow = length(paramLocations[[1]]) + 1)
+  
+  beta <- matrix(params[paramLocations[[2]]], 
+                 nrow = length(paramLocations[[2]]))
+  
+  gamma_L <- matrix(params[paramLocations[[3]]],
+                    nrow = length(paramLocations[[3]]))
+  
+  alpha <- matrix(params[paramLocations[[4]]], 
+                  nrow = length(params[paramLocations[[4]]]))
+  
+  gamma_n <- matrix(params[paramLocations[[5]]], 
+                    nrow = length(params[paramLocations[[5]]]))
+  
+  pi_n <- map(1:nMax, ~profitFun(W, Y, Z, 
+                                 lambda,#matrix(rep(.001, 2), nrow = 2),
+                                 beta,#matrix(rep(.001, 4), nrow = 4),
+                                 gamma_L,#matrix(rep(.001, 1), nrow = 1),
+                                 alpha,#matrix(rep(.001, 5), nrow = 5),
+                                 gamma_n,#matrix(rep(.001, 5), nrow = 5),
+                                 .))
+  
+  ll <- cbind(1 - pnorm(pi_n[[1]], lower.tail = FALSE),
+              map(1:(nMax - 1), ~ (pnorm(pi_n[[.]], lower.tail = FALSE) - pnorm(pi_n[[. + 1]], lower.tail = FALSE))[,1])%>%
+                simplify2array(),
+              pnorm(pi_n[[nMax]], lower.tail = FALSE))
+  
+  #unsure how Kosher this is, but I was having issues with starting values otherwise
+  for(i in 1:nrow(ll)){
+    
+    l <- ll[i,]
+    
+    check <- which(l < 0.00001)
+    
+    l[check] <- 0.0001
+    
+    l <- l / sum(l)
+    
+    ll[i,] <- l
+    
+  }
+  
+  ll <- rowSums(log(ll) * nEstablishmentsDummyMatrix)
+  
+  out <- -sum(ll)
+  
+  out
+  
+}
+
+
+
+allCoefsForNbeyondThisAreTheSame <- 1
+initParams <- list(lambda = rep(0.01, length(yVars) - 1),
+                   beta = rep(0.01, length(c(wVars, zVars))),
+                   gamma_L = rep(0.01, length(wVars)),
+                   alpha = rep(0.01, allCoefsForNbeyondThisAreTheSame),
+                   gamma_n = rep(0.01, allCoefsForNbeyondThisAreTheSame))
+
+#part of the aforementioned messiness
+paramLocations <- initParams%>%
+  map_dbl(~length(.))%>%
+  lag(default = 0)
+
+paramLocations <- 1:length(initParams)%>%
+  map(function(i) (1:length(initParams[[i]])) + sum(paramLocations[1:i]))
+
+params <- unlist(initParams)
+
+
+
+results <- optim(params, logLikelihood_constrained, data = df, nFrom = allCoefsForNbeyondThisAreTheSame, method = "Nelder-Mead", hessian = TRUE,
+                 control = list(abstol = .000000025,
+                                maxit = 50000,
+                                reltol = 1e-11,
+                                trace = 4,
+                                ndeps = rep(.00001, length(params))))
+results
+
+
+
+
+#I initially set up initParams as a list, not knowing that optim() refused list inputs. The result is things are a little messier
+initParams <- list(lambda = rep(0.01, length(yVars) - 1),
+                   beta = rep(0.01, length(c(wVars, zVars))),
+                   gamma_L = rep(0.01, length(wVars)),
+                   alpha = rep(0.01, nMax),
+                   gamma_n = rep(0.01, nMax))
+
+#part of the aforementioned messiness
+paramLocations <- initParams%>%
+  map_dbl(~length(.))%>%
+  lag(default = 0)
+
+paramLocations <- 1:length(initParams)%>%
+  map(function(i) (1:length(initParams[[i]])) + sum(paramLocations[1:i]))
+
+params <- unlist(initParams)
+
+#I can only get it to run when we cap n at 2, and I use Nelder-Mead
+#NOTE: in original paper, I do not know how they handled the W variables in their table
+#W can show up in V or F, and so should have a gamma_l and beta coef 
+#but their W variable LANDV is only reported with a gamma_l
+results <- optim(params, logLikelihood, data = df, method = "Nelder-Mead", hessian = TRUE,
+                 control = list(abstol = .000000025,
+                                maxit = 50000,
+                                reltol = 1e-11,
+                                trace = 4,
+                                ndeps = rep(.00001, length(params))))
+
+results_unconstrained <- results
 
 
 
