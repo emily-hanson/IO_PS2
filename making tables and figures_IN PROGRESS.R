@@ -4,19 +4,20 @@ library(tidyverse) #because you'd be insane not to
 library(ggthemes) #only for some default plot themes 
 library(sf) #only in event rds file is sf
 
+#obviously, if your name is not Lance Taylor you should update this to some other folder
 basePath <- 'G:\\My Drive\\phd\\2nd year\\term 2\\io\\hw 2\\'
 
-df <- basePath%>%
+dfOg <- basePath%>%
+  #assuming the input file name stays constant, otherwise you'll want to update this
   paste0('inputs\\Markets_Data.rds')%>%
   #chances are whoever finalized the data will save it as a csv, so read_csv obvs
   read_rds%>%
   as_tibble%>%
   #mutate is only here since I want to try different vars I AM NOT SAYING THIS IS WHAT WE USE
   mutate(popDensity = Pop2021 / LANDAREA)%>%
-  rename(Avg_fam_size = `Avg_fam_size `)
+  #rename is only here because who the hell puts a space at the end of a column name
+  rename_with(~str_squish(.))
 
-#market ID var
-idVars <- 'DGUID'
 #whatever variable is used as the desired count of establishments 
 nVar <- 'numberOfEstablishments_1kmBuffer'
 #market population var (to ensure this is what the market size units are measured in)
@@ -28,9 +29,16 @@ zVars <- c("Single_detached_count", "Avg_fam_size", "Avg_children_if_children")
 #demand and cost shifting vars 
 wVars <- 'popDensity'
 
+#we don't have enough obs with more than 2 vets, I think that is causing it to fail
+df <- dfOg%>%
+  mutate(!!nVar := ifelse(get(nVar) > 2, 2, get(nVar)),
+         #also centering and rescaling all non market size vars
+         across(all_of(c(wVars, zVars)), ~((.)-mean(.))/sd(.)),
+         #any market size var is in terms of deviations from mean 2021 population
+         across(all_of(yVars), ~((.) - mean(get(popVar)))/sd(get(popVar))))
+
+#biggest number of establishments in a pop centre
 nMax <- max(df[,nVar])
-
-
 
 #this is just used in the liklihood function
 nEstablishmentsDummyMatrix <- model.matrix(~factor(get(nVar)), df)
@@ -39,6 +47,7 @@ nEstablishmentsDummyMatrix[,1] <- nEstablishmentsDummyMatrix[,2:nrow(unique(df[,
   apply(1, function(x) max(x) < 1)%>%
   as.integer
 
+#deterministic component of profict, given params. ripped from paper
 profitFun <- function(w, y, z, lambda, beta, gamma_L, alpha, gamma_n, n){
   
   S <- y %*% lambda
@@ -55,6 +64,8 @@ profitFun <- function(w, y, z, lambda, beta, gamma_L, alpha, gamma_n, n){
   
 }
 
+#the likelihood is ripped from the paper as well. I had to add in a little bump when zeroes happened since for any
+#initial parameters there would only be probabilities of one or zero which was problematic for taking logs 
 logLikelihood <- function(data, params){
   
   W <- data[,wVars]%>%
@@ -92,23 +103,39 @@ logLikelihood <- function(data, params){
   ll <- cbind(1 - pnorm(pi_n[[1]], lower.tail = FALSE),
               map(1:(nMax - 1), ~ (pnorm(pi_n[[.]], lower.tail = FALSE) - pnorm(pi_n[[. + 1]], lower.tail = FALSE))[,1])%>%
                 simplify2array(),
-              pnorm(pi_n[[nMax]], lower.tail = FALSE))%>% 
-    log%>%
-    #right now these are here since no matter what I input I get probabilities of zero or one
-    replace(is.na(.) | is.nan(.) | is.infinite(.), 0)
+              pnorm(pi_n[[nMax]], lower.tail = FALSE))
   
-  ll <- rowSums(ll * nEstablishmentsDummyMatrix)
+  #unsure how Kosher this is, but I was having issues with starting values otherwise
+  for(i in 1:nrow(ll)){
+    
+    l <- ll[i,]
+    
+    check <- which(l == 0)
+    
+    l[check] <- 0.0001
+    
+    l <- l / sum(l)
+    
+    ll[i,] <- l
+    
+  }
   
-  return(-sum(ll))
+  ll <- rowSums(log(ll) * nEstablishmentsDummyMatrix)
+  
+  out <- -sum(ll)
+  
+  out
   
 }
 
-initParams <- list(lambda = rep(-0.005, length(yVars) - 1),
-                   beta = rep(-0.0031, length(c(wVars, zVars))),
-                   gamma_L = rep(-0.0021, length(wVars)),
-                   alpha = rep(-0.001, nMax),
-                   gamma_n = rep(5000000, nMax))
+#I initially set up initParams as a list, not knowing that optim() refused list inputs. The result is things are a little messier
+initParams <- list(lambda = rep(0, length(yVars) - 1),
+                   beta = rep(0, length(c(wVars, zVars))),
+                   gamma_L = rep(0, length(wVars)),
+                   alpha = rep(0, nMax),
+                   gamma_n = rep(0, nMax))
 
+#part of the aforementioned messiness
 paramLocations <- initParams%>%
   map_dbl(~length(.))%>%
   lag(default = 0)
@@ -118,14 +145,24 @@ paramLocations <- 1:length(initParams)%>%
 
 params <- unlist(initParams)
 
-optim(params, logLikelihood, hessian = TRUE, data = df, method = 'BFGS',
-      control = list(maxit = 500,
-                     pgtol = 1,
-                     trace = 4))
+#I can only get it to run when we cap n at 2, and I use Nelder-Mead
+results <- optim(params, logLikelihood, data = df, method = "Nelder-Mead", hessian = TRUE,
+                 control = list(abstol = .00000025,
+                                maxit = 500,
+                                reltol = 1e-11,
+                                trace = 4,
+                                ndeps = rep(.0000001, length(params))))
+
+
+
+results$hessian
+
+
+
 
 
 #figure 2
-df%>%
+dfOg%>%
   count(popRange = round(2*get(popVar) / 1000)/2)%>%
   ggplot(aes(x = popRange, y = n))+
   geom_col(fill = 'black')+
@@ -135,7 +172,7 @@ df%>%
        caption = 'each town is at least 1k, bins are increments of 500')
 
 #table 2 as a chart
-df%>%
+dfOg%>%
   count(nIncumbents = get(nVar))%>%
   ggplot(aes(x = nIncumbents, y = n))+
   geom_col(fill = 'black')+
@@ -144,7 +181,7 @@ df%>%
        x = 'Number of Establishments')
 
 #figure 3
-df%>%
+dfOg%>%
   count(popRange = round(get(popVar) / 1000),
         nIncumbents = factor(get(nVar), 
                              levels = get(nVar)%>%
@@ -160,7 +197,7 @@ df%>%
        caption = 'each town is at least 1k, bins are increments of 1k')
 
 #table 3 data
-df%>%
+dfOg%>%
   summarise(across(all_of(c(nVar, yVars, wVars, zVars)),
                    list(mean = ~mean(.),
                         stDev = ~sd(.),
