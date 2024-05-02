@@ -1,4 +1,7 @@
 #this file assumes the data being read in is finalized i.e. the relevant variables have been defined
+reqPaq <- c('tidyverse', 'ggthemes', 'sf')
+installPaq <- reqPaq[!reqPaq %in% installed.packages()]
+if(length(installPaq) > 0) install.packages(installPaq)
 
 library(tidyverse) #because you'd be insane not to
 library(ggthemes) #only for some default plot themes 
