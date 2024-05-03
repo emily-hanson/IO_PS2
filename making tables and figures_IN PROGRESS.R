@@ -25,7 +25,7 @@ wVars <- 'popDensity'
 
 #this sets what the upper bond of establishments considered in i.e. original bresnahan and reiss paper had everything
 #at 5 and beyond pooled as 5+ (or less for some industries)
-poolOver <- 2
+poolOver <- 4
 
 fileName <- industryFile%>%
   str_remove('\\..+$')
@@ -134,7 +134,7 @@ logLikelihood_constrained <- function(data, params, nFrom){
                                  min(., nFrom)))
   
   ll <- cbind(1 - pnorm(pi_n[[1]], lower.tail = FALSE),
-              map(1:max(c(1, (nFrom - 1))), ~ (pnorm(pi_n[[.]], lower.tail = FALSE) - pnorm(pi_n[[. + 1]], lower.tail = FALSE))[,1])%>%
+              map(1:max(c(1, (nMax - 1))), ~ (pnorm(pi_n[[.]], lower.tail = FALSE) - pnorm(pi_n[[. + 1]], lower.tail = FALSE))[,1])%>%
                 simplify2array(),
               pnorm(pi_n[[nMax]], lower.tail = FALSE))
   
@@ -241,7 +241,7 @@ table2Figure
 #figure 3
 figure3Data <- dfOg%>%
   count(popRange = round(get(popVar) / 1000),
-        nIncumbents = ifelse(get(nVar) >= poolOver, '2+', as.character(get(nVar))),
+        nIncumbents = ifelse(get(nVar) >= poolOver, paste0(nMax, '+'), as.character(get(nVar))),
         nIncumbents = factor(nIncumbents, 
                              levels = as.character(0:poolOver)%>%
                                replace(. == poolOver, paste0(poolOver, '+'))%>%
@@ -286,7 +286,9 @@ table4Data <- data.frame(term = c(yVars[-1],
                            diag%>%
                            sqrt)%>%
   rownames_to_column('regTerm')%>%
-  bind_rows(data.frame(term = 'Log likelihood', value = resultsUnconstrained$value))
+  bind_rows(data.frame(term = 'Log likelihood', 
+                       value = resultsUnconstrained$value, 
+                       regTerm = 'Log likelihood'))
 
 #table5a entry threshold estimates 
 table5aData <- (1:nMax)%>%
@@ -299,7 +301,7 @@ table5aData <- (1:nMax)%>%
                  by = c('variable' = 'term'))%>%
       summarise(numerator = sum(value * mean) + table4Data$value[table4Data$regTerm == 'gamma_n1'])
     
-    if(n > 1) num <- num + sum(table4Data$value[str_detect(table4Data$regTerm, 'gamma_n[^1][0-9]*$')])
+    if(n > 1) num <- num + sum(table4Data$value[table4Data$regTerm %in% paste0('gamma_n', 2:n)])
     
     den <- table3Data%>%
       inner_join(table4Data%>%
@@ -308,7 +310,7 @@ table5aData <- (1:nMax)%>%
                  by = c('variable' = 'term'))%>%
       summarise(denominator = sum(value * mean) + table4Data$value[table4Data$regTerm == 'alpha1'])
     
-    if(n > 1) den <- den - sum(table4Data$value[str_detect(table4Data$regTerm, 'alpha[^1][0-9]*$')])
+    if(n > 1) den <- den - sum(table4Data$value[table4Data$regTerm %in% paste0('alpha', 2:n)])
     
     data.frame(N = n,
                num = num$numerator,
@@ -360,7 +362,7 @@ table6Data <- (1:nMax)%>%
                  by = c('variable' = 'term'))%>%
       summarise(denominator = sum(value * mean) + table6RegResults$value[table6RegResults$regTerm == 'alpha1'])
     
-    if(n > 1) den <- den - sum(table6RegResults$value[str_detect(table6RegResults$regTerm, 'alpha[^1][0-9]*$')])
+    if(n > 1) den <- den - sum(table6RegResults$value[table4Data$regTerm %in% paste0('alpha', 2:n)])
     
     data.frame(N = n,
                num = num$numerator,
@@ -390,7 +392,6 @@ ls()%>%
 ls()%>%
   str_subset('[dD]ata')%>%
   walk(~write_csv(get(.), paste0(outFolder, ., '.csv')))
-
 
 
 
