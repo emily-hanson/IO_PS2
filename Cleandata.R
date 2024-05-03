@@ -158,6 +158,8 @@ markets_desired <- markets_desired%>% st_buffer(1000) %>%
 
 ##------My Market should now have all the data needed for market analysis
 write_rds(markets_desired, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data.rds")
+markets_desired_csv <- as.data.frame(markets_desired) %>% select(-geometry) %>% apply(2, as.character)
+write.csv(markets_desired_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_csv.csv")
 
 ## ------------------------------------------ Checks, Excluded Market Statistics, Pretty Pictures ------------------------------------- ##-----
 
