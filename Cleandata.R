@@ -6,7 +6,7 @@
 #     - 
 
 # SET FOLDER for imports
-folder <- "/home/emilyhanson/Desktop/Io_PS2/Data/"
+folder <- "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\"
 
 library(tidyverse)
 library(tidyverse)
@@ -29,12 +29,6 @@ estab_df <- EstablishmentData_ON%>%
 geo_prov <- folder%>%
     paste0('ShapeFile_prov/lpr_000a21a_e.shp')%>%
     read_sf
-# geo_cen_div <- folder%>%
-#     paste0('ShapeFile_census/lcd_000a21a_e.shp')%>%
-#     read_sf
-# geo_csd <- folder%>%
-#     paste0('ShapeFile_CSD/lcsd000a21a_e.shp')%>%
-#     read_sf
 geo_cma <- folder%>%
     paste0('ShapeFile_cma/lcma000a21a_e.shp')%>%
     read_sf
@@ -45,7 +39,8 @@ geo_popCen <- folder%>%
 ##------Import Market Characteristics by Population center
 # Must convert from long to wide
 
-selected_char_ID <- c(1,2,42,76,77) # desired characteristics from data file for C1_COUNT_TOTAL
+# desired characteristics from data file for C1_COUNT_TOTAL
+selected_char_ID <- c(1, 2, 3, 4, 5, 6, 7, 24, 37, 40, 41, 42, 57, 59, 77, 106, 113, 115, 121, 128, 123, 206, 208, 214, 216, 1403, 1412, 1414, 1415, 1416, 1469, 1471, 1486, 1487, 1488, 1489, 1494, 1495, 1528, 1529, 1684, 1998, 1999, 2000, 2002, 2009, 2223, 2224, 2225, 2226, 2227, 2228, 2229, 2230, 2593, 2594, 2595, 2596, 2597, 2598, 2599, 2600, 2601, 2602, 2603, 2604, 2607, 2608, 2609, 2610, 2611, 2612, 2613, 2614, 2615, 2616)
 selected_char_ID_rate <- c(42) # desired characteristics from data file for C10_RATE_TOTAL
 # if you change these lists, you will need to change the rename line at end of this code block
 
@@ -68,22 +63,13 @@ mrkChar_bypopCen <- mrkChar_bypopCen%>%
 rm(selected_char_ID, selected_char_ID_rate)
 
 # Change this if you add characteristics 
-mrkChar_bypopCen <- mrkChar_bypopCen%>%rename("Pop2021" = 3, "Pop2016" = 4, 
-                                          "Single_detached_count" = 5, 
-                                          "Avg_fam_size " = 6,
-                                          "Avg_children_if_children" = 7,
-                                          "Single_detached_rate" = 8)
+mrkChar_bypopCen <- mrkChar_bypopCen
 
-##------Import Market Population by CSD instead of population center
-# popData_CSD <- folder %>%
-#    paste0('PopData_byCSD/98100002.csv')%>%read_csv
-# popData_CSD<- popData_CSD%>%
-#   mutate(my_CDID = substring(DGUID, 10,14))%>%
-#   mutate(my_CSDID = substring(DGUID, 10,17))%>%
-#   subset(popData_CSD, select = c(2, 3, 5, 7, 31, 32))%>%
-#   rename("Pop2021" =3, "Pop2016" = 4)
-
-
+# %>%rename("Pop2021" = 3, "Pop2016" = 4, 
+#                                           "Single_detached_count" = 5, 
+#                                           "Avg_fam_size " = 6,
+#                                           "Avg_children_if_children" = 7,
+#                                           "Single_detached_rate" = 8)
 
 ## ------------------------------------------ Clean Establishment Data ---------------------------------------- ##----
 
@@ -124,14 +110,6 @@ markets <- full_join(geo_popCen, mrkChar_bypopCen, by = "DGUID") %>%
   group_by(DGUID)%>%
   slice_head(n = 1)%>%
   ungroup
-
-# duplicate places
-# markets %>% filter(DGUID %in% subset(markets, duplicated(markets$DGUID))$DGUID)
-
-# merge market char(population) into csd geo file
-#geo_csd <- left_join(geo_csd, popData_CSD, by = c("CSDUID" ="my_CSDID" ))
-#geo_csd <- geo_csd%>%rename("Pop2021" =7)%>%rename("Pop2016" = 8)
-
 
 ##------Impose market requirements on population centers
 
@@ -179,8 +157,7 @@ markets_desired <- markets_desired%>% st_buffer(1000) %>%
            sapply(function(x) x%>%length))
 
 ##------My Market should now have all the data needed for market analysis
-write_rds(markets_desired, '/home/emilyhanson/Desktop/Io_PS2/Markets_Data.rds')
-
+write_rds(markets_desired, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data.rds")
 
 ## ------------------------------------------ Checks, Excluded Market Statistics, Pretty Pictures ------------------------------------- ##-----
 
