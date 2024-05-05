@@ -100,13 +100,21 @@ Mech_DATA <- folder%>%
   paste0('\\Data\\Google Data Scrape\\Mech_DATA.rds')%>%
   readRDS
 
+##--------------------- Vet -----------
+#collected in getData
+
+Vet_DATA <- folder%>%
+  paste0('\\Data\\Google Data Scrape\\Vet_Data_canada.rds')%>%
+  readRDS
+
+
 ##--------------------------------------------------------------------- Clean New & Get Counts Data ------------------------------ ## -----
 
 geo_prov <- folder%>%
   paste0('Data\\ShapeFile_prov\\lpr_000a21a_e.shp')%>%
   read_sf
 
-Markets_Data_moreInd <- Markets_Data 
+Markets_Data_wInd <- Markets_Data 
 
 ##-------------------------- Dentists -------
 
@@ -146,7 +154,7 @@ estab_dentist_sf <- st_intersection(estab_dentist_sf,geo_prov%>%filter(PRUID < 6
 dentistCountDF <- c(0, 1, 2, 5)%>%
   map_dfc(function(kmBuffer){
     
-    Markets_Data_moreInd%>% 
+    Markets_Data_wInd%>% 
       st_buffer(kmBuffer * 1000)%>%
       mutate(!!paste0('ndentist_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_dentist_sf)%>%
                sapply(function(x) x%>%length))%>%
@@ -158,7 +166,7 @@ dentistCountDF <- c(0, 1, 2, 5)%>%
   select(DGUID = DGUID...1,
          matches('ndentist'))
 
-Markets_Data_moreInd <- Markets_Data_moreInd%>%
+Markets_Data_wInd <- Markets_Data_wInd%>%
   left_join(dentistCountDF, by = 'DGUID')
 
 
@@ -201,7 +209,7 @@ estab_funeral_sf <- st_intersection(estab_funeral_sf,geo_prov%>%filter(PRUID < 6
 funeralCountDF <- c(0, 1, 2, 5)%>%
   map_dfc(function(kmBuffer){
     
-    Markets_Data_moreInd%>% 
+    Markets_Data_wInd%>% 
       st_buffer(kmBuffer * 1000)%>%
       mutate(!!paste0('nfuneral_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_funeral_sf)%>%
                sapply(function(x) x%>%length))%>%
@@ -213,7 +221,7 @@ funeralCountDF <- c(0, 1, 2, 5)%>%
   select(DGUID = DGUID...1,
          matches('nfuneral'))
 
-Markets_Data_moreInd <- Markets_Data_moreInd%>%
+Markets_Data_wInd <- Markets_Data_wInd%>%
   left_join(funeralCountDF, by = 'DGUID')
 
 
@@ -258,7 +266,7 @@ estab_mech_sf <- st_intersection(estab_mech_sf,geo_prov%>%filter(PRUID < 60))
 mechCountDF <- c(0, 1, 2, 5)%>%
   map_dfc(function(kmBuffer){
     
-    Markets_Data_moreInd%>% 
+    Markets_Data_wInd%>% 
       st_buffer(kmBuffer * 1000)%>%
       mutate(!!paste0('nmech_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_mech_sf)%>%
                sapply(function(x) x%>%length))%>%
@@ -270,11 +278,69 @@ mechCountDF <- c(0, 1, 2, 5)%>%
   select(DGUID = DGUID...1,
          matches('nmech'))
 
-Markets_Data_moreInd <- Markets_Data_moreInd%>%
+Markets_Data_wInd <- Markets_Data_wInd%>%
   left_join(mechCountDF, by = 'DGUID')
 
+
+##-------------------------- Vet ------
+
+estab_vet_df <- Vet_DATA%>%
+  map_dfr(function(x) x$results)
+
+# Simple data cleaning 
+estab_vet_df$geometry <- estab_vet_df$geometry$location[,c('lat', 'lng')]
+estab_vet_df <- estab_vet_df%>%
+  group_by(place_id)%>%
+  transmute(formatted_address, 
+            lat = geometry$lat, 
+            lng = geometry$lng,
+            name, 
+            business_status, 
+            types = types%>%
+              unlist%>%
+              paste0(collapse = '___'), 
+            permanently_closed)%>%
+  ungroup
+
+estab_vet_df <- estab_vet_df%>%
+  filter(is.na(permanently_closed))%>%
+  group_by(formatted_address)%>%
+  slice_head(n = 1)%>%
+  group_by(place_id)%>%
+  slice_head(n = 1)%>%
+  ungroup
+
+
+# Make into shapefile using PCS_Lambert_Conformal_Conic reference system
+estab_vet_sf <- st_as_sf(estab_vet_df, coords = c("lng","lat"), crs = 'WGS84')
+estab_vet_sf <- st_transform(estab_vet_sf, crs = st_crs(geo_prov))
+
+
+#drop points outside Canadian provinces 
+estab_vet_sf <- st_intersection(estab_vet_sf,geo_prov%>%filter(PRUID < 60))
+
+#get counts
+vetCountDF <- c(0, 1, 2, 5)%>%
+  map_dfc(function(kmBuffer){
+    
+    Markets_Data_wInd%>% 
+      st_buffer(kmBuffer * 1000)%>%
+      mutate(!!paste0('nvet_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_vet_sf)%>%
+               sapply(function(x) x%>%length))%>%
+      as.tibble%>%
+      select(DGUID, matches('nvet_'))
+    
+    
+  })%>%
+  select(DGUID = DGUID...1,
+         matches('nvet'))
+
+Markets_Data_wInd <- Markets_Data_wInd%>%
+  left_join(vetCountDF, by = 'DGUID')
+
+
 # export
-mrk_csv <- as.data.frame(Markets_Data_moreInd) %>% select(-geometry) %>% apply(2, as.character)
-write.csv(mrk_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_moreInd.csv")
+mrk_csv <- as.data.frame(Markets_Data_wInd) %>% select(-geometry) %>% apply(2, as.character)
+write.csv(mrk_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_wInd.csv")
 
 

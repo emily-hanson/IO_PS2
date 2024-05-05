@@ -65,45 +65,7 @@ rm(selected_char_ID, selected_char_ID_rate)
 # Change this if you add characteristics 
 mrkChar_bypopCen <- mrkChar_bypopCen
 
-# %>%rename("Pop2021" = 3, "Pop2016" = 4, 
-#                                           "Single_detached_count" = 5, 
-#                                           "Avg_fam_size " = 6,
-#                                           "Avg_children_if_children" = 7,
-#                                           "Single_detached_rate" = 8)
-
-## ------------------------------------------ Clean Establishment Data ---------------------------------------- ##----
-
-# Simple data cleaning 
-estab_df$geometry <- estab_df$geometry$location[,c('lat', 'lng')]
-estab_df <- estab_df%>%
-  group_by(place_id)%>%
-  transmute(formatted_address, 
-            lat = geometry$lat, 
-            lng = geometry$lng,
-            name, 
-            business_status, 
-            types = types%>%
-              unlist%>%
-              paste0(collapse = '___'), 
-            permanently_closed)%>%
-  ungroup
-
-# drop entries: duplicates and permanently closed establishments
-estab_df <- estab_df%>%
-  filter(!is.na(permanently_closed))%>%
-  group_by(formatted_address)%>%
-  slice_head(n = 1)%>%
-  ungroup
-
-# Make into shapefile using PCS_Lambert_Conformal_Conic reference system
-estab_sf <- st_as_sf(estab_df, coords = c("lng","lat"), crs = 'WGS84')
-estab_sf <- st_transform(estab_sf, crs = st_crs(geo_prov))
-
-#drop points outside Canadian provinces 
-estab_sf <- st_intersection(estab_sf,geo_prov%>%filter(PRUID < 60))
-
-## ------------------------------------------ Work with Market Level Data ---------------------------------------- ##----
-# Change mindset from data of establishments to data of markets / places
+## -----------------------------------------------Merge adn Market Restrictions ---------------------------------------- ##----
 
 ##------Merge market characteristics into geo shape files
 # merge market char into population center geo file
@@ -149,50 +111,14 @@ rm(markets_exclude_cma)
 
 markets_desired <- markets%>%filter(! DGUID %in% markets_exclude$DGUID)
 
-##------Count establishments in each of my markets
 
-#get counts
-CountDF <- c(0, 1, 2, 5)%>%
-  map_dfc(function(kmBuffer){
-    
-    markets_desired%>% 
-      st_buffer(kmBuffer * 1000)%>%
-      mutate(!!paste0('nvet_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_sf)%>%
-               sapply(function(x) x%>%length))%>%
-      as_tibble%>%
-      select(DGUID, matches('nvet_'))
-    
-    
-  })%>%
-  select(DGUID = DGUID...1,
-         matches('nvets'))
-
-Markets_Data <- markets_desired%>%
-  left_join(CountDF, by = 'DGUID')
-
-##------My Market should now have all the data needed for market analysis
+##------Export 
+  
+Markets_Data <- markets_desired
 write_rds(Markets_Data , "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data.rds")
 Markets_Data_csv <- as.data.frame(Markets_Data) %>% select(-geometry) %>% apply(2, as.character)
 write.csv(Markets_Data_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_csv.csv")
 
-## ------------------------------------------ Checks, Excluded Market Statistics, Pretty Pictures ------------------------------------- ##-----
-
-# Count establishments total and thrown away
-
-# count_est_exclude1 <- st_intersects(st_union(geo_cma_buffer),estab_sf)
-# count_est_exclude1 <- length(count_est_exclude1[[1]])
-# 
-# count_est_exclude2 <- markets_exclude%>%
-#     filter(exclude_reason == "Within 10km of another population center" ) %>%
-#     st_union()%>%
-#     st_intersects(estab_sf)
-# count_est_exclude2 <- length(count_est_exclude2[[1]])
-# 
-# # count est outside CMA buffer and outside my markets 
-# nrow(estab_sf) - count_est_exclude1 - count_est_exclude2 - sum(markets_desired$numberOfEstablishments_1kmBuffer)
-# 
-# # Count markets excluded by reason 
-# markets_exclude%>%group_by(exclude_reason)%>%summarise(n(), nrow({.}))
 
 
 
