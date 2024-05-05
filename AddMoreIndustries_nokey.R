@@ -118,7 +118,8 @@ estab_dentist_df <- estab_dentist_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_dentist_df <- estab_dentist_df %>% distinct(estab_dentist_df$place_id, estab_dentist_df$formatted_address , .keep_all = TRUE)
+estab_dentist_df <- estab_dentist_df %>% distinct(estab_dentist_df$place_id, .keep_all = TRUE)
+estab_dentist_df <- estab_dentist_df %>% distinct(estab_dentist_df$formatted_address , .keep_all = TRUE)
 estab_dentist_df <- estab_dentist_df %>% filter(is.na(estab_dentist_df$permanently_closed ))
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
@@ -165,7 +166,8 @@ estab_funeral_df <- estab_funeral_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_funeral_df <- estab_funeral_df %>% distinct(estab_funeral_df$place_id, estab_funeral_df$formatted_address , .keep_all = TRUE)
+estab_funeral_df <- estab_funeral_df %>% distinct(estab_funeral_df$place_id, .keep_all = TRUE)
+estab_funeral_df <- estab_funeral_df %>% distinct(estab_funeral_df$formatted_address , .keep_all = TRUE)
 estab_funeral_df <- estab_funeral_df %>% filter(is.na(estab_funeral_df$permanently_closed ))
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
@@ -215,7 +217,8 @@ estab_mech_df <- estab_mech_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_mech_df <- estab_mech_df %>% distinct(estab_mech_df$place_id, estab_mech_df$formatted_address , .keep_all = TRUE)
+estab_mech_df <- estab_mech_df %>% distinct(estab_mech_df$place_id, .keep_all = TRUE)
+estab_mech_df <- estab_mech_df %>% distinct(estab_mech_df$formatted_address , .keep_all = TRUE)
 estab_mech_df <- estab_mech_df %>% filter(is.na(estab_mech_df$permanently_closed ))
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system

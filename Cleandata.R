@@ -6,7 +6,7 @@
 #     - 
 
 # SET FOLDER for imports
-folder <- "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\"
+folder <- "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\"
 
 library(tidyverse)
 library(tidyverse)
@@ -27,13 +27,13 @@ estab_df <- EstablishmentData_ON%>%
 
 ##------Import Geographies as shape files (possibly not all will be used)
 geo_prov <- folder%>%
-    paste0('ShapeFile_prov/lpr_000a21a_e.shp')%>%
+    paste0('Data\\ShapeFile_prov\\lpr_000a21a_e.shp')%>%
     read_sf
 geo_cma <- folder%>%
-    paste0('ShapeFile_cma/lcma000a21a_e.shp')%>%
+    paste0('Data\\ShapeFile_cma\\lcma000a21a_e.shp')%>%
     read_sf
 geo_popCen <- folder%>%
-    paste0('ShapeFile_popCentre/lpc_000a21a_e.shp')%>%
+    paste0('Data\\ShapeFile_popCentre\\lpc_000a21a_e.shp')%>%
     read_sf
 
 ##------Import Market Characteristics by Population center
@@ -45,7 +45,7 @@ selected_char_ID_rate <- c(42) # desired characteristics from data file for C10_
 # if you change these lists, you will need to change the rename line at end of this code block
 
 mrkChar_bypopCen <- folder%>%
-    paste0('PopData_bypopCenter/98-401-X2021009_English_CSV_data.csv')%>%
+    paste0('Data\\PopData_bypopCenter\\98-401-X2021009_English_CSV_data.csv')%>%
     read_csv(col_types = cols(.default = "c", CHARACTERISTIC_ID = "d", C1_COUNT_TOTAL = "d", C10_RATE_TOTAL = "d"))
 
 mrkChar_bypopCen$C10_RATE_TOTAL <- ifelse(mrkChar_bypopCen$CHARACTERISTIC_ID %in% selected_char_ID_rate,
@@ -89,8 +89,9 @@ estab_df <- estab_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_df <- distinct(estab_df)%>%
-      filter(is.na(permanently_closed))
+estab_df <- estab_df %>% distinct(estab_df$place_id, .keep_all = TRUE)
+estab_df <- estab_df %>% distinct(estab_df$formatted_address , .keep_all = TRUE)
+estab_df <- estab_df %>% filter(is.na(estab_df$permanently_closed ))
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_sf <- st_as_sf(estab_df, coords = c("lng","lat"), crs = 'WGS84')
