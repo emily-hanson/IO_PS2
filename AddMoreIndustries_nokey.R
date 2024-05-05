@@ -230,10 +230,13 @@ estab_mech_df <- estab_mech_df%>%
   ungroup
 
 estab_mech_df <- estab_mech_df%>%
-  filter(!is.na(permanently_closed))%>%
+  filter(is.na(permanently_closed))%>%
   group_by(formatted_address)%>%
   slice_head(n = 1)%>%
+  group_by(place_id)%>%
+  slice_head(n = 1)%>%
   ungroup
+  
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')
