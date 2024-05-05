@@ -291,11 +291,24 @@ estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')
                     filter(PRUID < 60))
 
 
-temp <- Markets_Data_moreInd%>%
-  mutate(nmech = st_intersects({.},estab_mech_sf)%>%
-           sapply(function(x) x%>%length))
+mechCountDF <- c(0, 1, 2, 5)%>%
+  map_dfc(function(kmBuffer){
+    
+    Markets_Data_moreInd%>% 
+      st_buffer(kmBuffer * 1000)%>%
+      mutate(!!paste0('nmech_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_mech_sf)%>%
+               sapply(function(x) x%>%length))%>%
+      as.tibble%>%
+      select(DGUID, matches('nmech_'))
+      
+    
+  })%>%
+  select(DGUID = DGUID...1,
+         matches('nmech'))
 
-temp%>%as.data.frame%>%count(nmech)
+Markets_Data_moreInd <- Markets_Data_moreInd%>%
+  left_join(mechCountDF, by = 'DGUID')
+
 
                   }
 
