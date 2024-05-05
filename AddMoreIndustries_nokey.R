@@ -243,6 +243,62 @@ estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')
 estab_mech_sf <- st_transform(estab_mech_sf, crs = st_crs(geo_prov))
 
 
+          if(FALSE){
+
+            Mech_DATA <- "C:\\Users\\lance\\Downloads\\Mech_DATA.rds"%>%
+  readRDS
+
+Markets_Data_moreInd <-"C:\\Users\\lance\\Downloads\\Markets_Data.rds"%>%
+  readRDS
+
+
+geo_prov <- "C:\\Users\\lance\\Downloads\\ShapeFile_prov\\ShapeFile_prov\\lpr_000a21a_e.shp"%>%
+  read_sf
+
+estab_mech_df <- Mech_DATA%>%
+  map_dfr(function(x) x$results)
+
+# Simple data cleaning 
+estab_mech_df$geometry <- estab_mech_df$geometry$location[,c('lat', 'lng')]
+
+estab_mech_df <- Mech_DATA%>%
+    map_dfr(function(x) x$results)
+  
+# Simple data cleaning 
+estab_mech_df$geometry <- estab_mech_df$geometry$location[,c('lat', 'lng')]
+estab_mech_df <- estab_mech_df%>%
+  group_by(place_id)%>%
+  transmute(formatted_address, 
+            lat = geometry$lat, 
+            lng = geometry$lng,
+            name, 
+            business_status, 
+            types = types%>%
+              unlist%>%
+              paste0(collapse = '___'), 
+            permanently_closed)%>%
+  ungroup%>%
+  filter(is.na(permanently_closed))%>%
+  group_by(formatted_address)%>%
+  slice_head(n = 1)%>%
+  group_by(place_id)%>%
+  slice_head(n = 1)%>%
+  ungroup  
+
+estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')%>%
+  st_transform(estab_mech_sf, crs = st_crs(geo_prov))%>%
+  st_intersection(geo_prov%>%
+                    filter(PRUID < 60))
+
+
+temp <- Markets_Data_moreInd%>%
+  mutate(nmech = st_intersects({.},estab_mech_sf)%>%
+           sapply(function(x) x%>%length))
+
+temp%>%as.data.frame%>%count(nmech)
+
+                  }
+
 #drop points outside Canadian provinces 
 estab_mech_sf <- st_intersection(estab_mech_sf,geo_prov%>%filter(PRUID < 60))
 
