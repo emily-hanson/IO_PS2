@@ -73,6 +73,21 @@ for (i in 1:nrow(sf_points)){
 #  write_rds(Funeral_DATA, 'G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\Funeral_DATA.rds')
 #  DoNotDeleteData2 <- Funeral_DATA
 
+## ------------------ Funeral ------------
+# Collected May 4
+# Nalinda Google payment key
+ key = ""
+ set_key(key)
+  
+  Mech_DATA <- list()
+  for(i in 1:nrow(my_points)){
+    jesusVar <<- i # for debug
+    Mech_DATA[[i]] <- googleway::google_places(search_string = "Mechanic", location = c(my_points[i,1],my_points[i,2]) , radius = max_radius +5010)
+    Sys.sleep(1+runif(1)) # To calm down API
+  }
+write_rds(Mech_DATA, 'G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\Mech_DATA.rds')
+  DoNotDeleteData3 <- Mech_DATA
+
 ##--------------------------------------------------------------------- Clean New & Get Counts Data ------------------------------ ## -----
 
 geo_prov <- folder%>%
@@ -180,3 +195,56 @@ Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(5000) %>%
 
 mrk_csv <- as.data.frame(Markets_Data_moreInd) %>% select(-geometry) %>% apply(2, as.character)
 write.csv(mrk_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_moreInd.csv")
+
+##-------------------------- Mech ------
+
+estab_mech_df <- Mech_DATA%>%
+  map_dfr(function(x) x$results)
+
+# Simple data cleaning 
+estab_mech_df$geometry <- estab_mech_df$geometry$location[,c('lat', 'lng')]
+estab_mech_df <- estab_mech_df%>%
+  group_by(place_id)%>%
+  transmute(formatted_address, 
+            lat = geometry$lat, 
+            lng = geometry$lng,
+            name, 
+            business_status, 
+            types = types%>%
+              unlist%>%
+              paste0(collapse = '___'), 
+            permanently_closed)%>%
+  ungroup
+
+# drop entries: duplicates and permanently closed establishments
+estab_mech_df <- distinct(estab_mech_df)%>%
+  filter(is.na(permanently_closed))
+
+# Make into shapefile using PCS_Lambert_Conformal_Conic reference system
+estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')
+estab_mech_sf <- st_transform(estab_mech_sf, crs = st_crs(geo_prov))
+rm(estab_mech_df)
+
+#drop points outside Canadian provinces 
+estab_mech_sf <- st_intersection(estab_mech_sf,geo_prov%>%filter(PRUID < 60))
+
+Markets_Data_moreInd <- Markets_Data_moreInd%>%
+  mutate(nmech = st_intersects({.},estab_mech_sf)%>%
+           sapply(function(x) x%>%length))
+
+Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(1000) %>%
+  mutate(nmechs_1kmBuffer = st_intersects({.},estab_mech_sf)%>%
+           sapply(function(x) x%>%length))
+
+Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(2000) %>%
+  mutate(nmechs_2kmBuffer = st_intersects({.},estab_mech_sf)%>%
+           sapply(function(x) x%>%length))
+
+Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(5000) %>%
+  mutate(nmechs_5kmBuffer = st_intersects({.},estab_mech_sf)%>%
+           sapply(function(x) x%>%length))
+
+mrk_csv <- as.data.frame(Markets_Data_moreInd) %>% select(-geometry) %>% apply(2, as.character)
+write.csv(mrk_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_moreInd.csv")
+
+
