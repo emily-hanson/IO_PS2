@@ -177,7 +177,7 @@ logLikelihood_constrained <- function(data, params, nFrom, w, y, x, outcomeMatri
   
   ll <- rowSums(log(ll) * outcomeMatrix)
   
-  out <- -sum(ll)
+  out <- -sum(ll) + ((min(c(alpha, gamma_n)) < 0) * 69420)
   
   out
   
