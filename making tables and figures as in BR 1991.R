@@ -16,6 +16,8 @@ basePath <- 'G:\\My Drive\\phd\\2nd year\\term 2\\io\\hw 2\\inputs\\'
 industryFile <- 'Markets_vets.csv'
 
 #whatever variable is used as the desired count of establishments 
+#NOTE: ALL STARTING AND ENDING WHITESPACES, AND EXCESS INTERNAL WHITESPACES ARE REMOVED FROM NAMES, SO IF THERE IS EXCESS WHITESPACE
+#AS SUCH, REMOVE FROM COLUMN NAMES FROM. FOR EXAMPLE, USE 'C1_COUNT_TOTAL_65 years and over' INSTEAD OF ' C1_COUNT_TOTAL_65   years and over'
 nVar <- 'numberOfEstablishments_1kmBuffer'
 alternate_nVar <- c("numberOfEstablishments", "numberOfEstablishments_2kmBuffer", "numberOfEstablishments_5kmBuffer")
 #market population var (to ensure this is what the market size units are measured in)
@@ -46,11 +48,6 @@ dfOg <- basePath%>%
   paste0(industryFile)%>%
   #chances are whoever finalized the data will save it as a csv, so read_csv obvs
   read_csv%>%
-  as_tibble%>%
-  #mutate is only here since I want to try different vars I AM NOT SAYING THIS IS WHAT WE USE
-  #mutate(popDensity = Pop2021 / LANDAREA)%>%
-  #rename is only here because who the hell puts a space at the end of a column name
-  #I will remove these later, they are just since the fed in data wasn't entirely cleaned
   rename_with(~str_squish(.))%>%
   mutate(`C1_COUNT_TOTAL_65 years and over` = str_extract(`C1_COUNT_TOTAL_65 years and over`, '[0-9]+')%>%
            as.numeric)
@@ -332,6 +329,7 @@ table4Data <- data.frame(term = c(yVars[-1],
                                     paste0('F_', ., ' - F_', .-1, ' (g_', ., ')')),
                          value = resultsUnconstrained$par,
                          se = resultsUnconstrained$hessian%>%
+                           solve%>%
                            diag%>%
                            sqrt)%>%
   rownames_to_column('regTerm')%>%
@@ -400,6 +398,7 @@ table6RegResults <- data.frame(term = c(yVars[-1],
                                     paste0('V_', .-1, ' - V_', ., ' (a_', ., ')')),
                          value = results_no_gamma2orhigher$par,
                          se = results_no_gamma2orhigher$hessian%>%
+                           solve%>%
                            diag%>%
                            sqrt)%>%
   rownames_to_column('regTerm')
@@ -448,6 +447,7 @@ table7RegResults <- data.frame(term = c(c(wVars, zVars),
                                           paste0('V_', .-1, ' - V_', ., ' (a_', ., ')')),
                                value = results_noOtherPopVars$par,
                                se = results_noOtherPopVars$hessian%>%
+                                 solve%>%
                                  diag%>%
                                  sqrt)%>%
   rownames_to_column('regTerm')
@@ -526,6 +526,7 @@ table8RegResults <- data.frame(term = c(yVars[-1],
                                           paste0('V_', .-1, ' - V_', ., ' (a_', ., ')')),
                                value = results_noProfitVariation$par,
                                se = results_noProfitVariation$hessian%>%
+                                 solve%>%
                                  diag%>%
                                  sqrt)%>%
   rownames_to_column('regTerm')
@@ -615,6 +616,7 @@ table9Data <- alternate_nVar%>%
                                               paste0('F_', ., ' - F_', .-1, ' (g_', ., ')')),
                                    value = resultsTemp$par,
                                    se = resultsTemp$hessian%>%
+                                     solve%>%
                                      diag%>%
                                      sqrt)%>%
       rownames_to_column('regTerm')
