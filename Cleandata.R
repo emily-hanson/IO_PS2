@@ -89,6 +89,13 @@ estab_df <- estab_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
+           change to:
+
+           estab_df%>%
+           filter(!is.na(permanently_clsed))%>%
+           group_by(formatted_address)%>%
+           slice_head(n = 1)
+           
 estab_df <- estab_df %>% distinct(estab_df$place_id, .keep_all = TRUE)
 estab_df <- estab_df %>% distinct(estab_df$formatted_address , .keep_all = TRUE)
 estab_df <- estab_df %>% filter(is.na(estab_df$permanently_closed ))
