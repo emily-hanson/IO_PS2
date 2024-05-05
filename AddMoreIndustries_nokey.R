@@ -76,17 +76,17 @@ for (i in 1:nrow(sf_points)){
 ## ------------------ Funeral ------------
 # Collected May 4
 # Nalinda Google payment key
- key = ""
- set_key(key)
-  
-  Mech_DATA <- list()
-  for(i in 1:nrow(my_points)){
-    jesusVar <<- i # for debug
-    Mech_DATA[[i]] <- googleway::google_places(search_string = "Mechanic", location = c(my_points[i,1],my_points[i,2]) , radius = max_radius +5010)
-    Sys.sleep(1+runif(1)) # To calm down API
-  }
-write_rds(Mech_DATA, 'G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\Mech_DATA.rds')
-  DoNotDeleteData3 <- Mech_DATA
+#  key = ""
+#  set_key(key)
+#   
+#   Mech_DATA <- list()
+#   for(i in 1:nrow(my_points)){
+#     jesusVar <<- i # for debug
+#     Mech_DATA[[i]] <- googleway::google_places(search_string = "Mechanic", location = c(my_points[i,1],my_points[i,2]) , radius = max_radius +5010)
+#     Sys.sleep(1+runif(1)) # To calm down API
+#   }
+# write_rds(Mech_DATA, 'G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\Mech_DATA.rds')
+#   DoNotDeleteData3 <- Mech_DATA
 
 ##--------------------------------------------------------------------- Clean New & Get Counts Data ------------------------------ ## -----
 
@@ -118,13 +118,12 @@ estab_dentist_df <- estab_dentist_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_dentist_df <- distinct(estab_dentist_df)%>%
-  filter(is.na(permanently_closed))
+estab_dentist_df <- estab_dentist_df %>% distinct(estab_dentist_df$place_id, estab_dentist_df$formatted_address , .keep_all = TRUE)
+estab_dentist_df <- estab_dentist_df %>% filter(is.na(estab_dentist_df$permanently_closed ))
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_dentist_sf <- st_as_sf(estab_dentist_df, coords = c("lng","lat"), crs = 'WGS84')
 estab_dentist_sf <- st_transform(estab_dentist_sf, crs = st_crs(geo_prov))
-rm(estab_dentist_df)
 
 #drop points outside Canadian provinces 
 estab_dentist_sf <- st_intersection(estab_dentist_sf,geo_prov%>%filter(PRUID < 60))
@@ -166,13 +165,12 @@ estab_funeral_df <- estab_funeral_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_funeral_df <- distinct(estab_funeral_df)%>%
-  filter(is.na(permanently_closed))
+estab_funeral_df <- estab_funeral_df %>% distinct(estab_funeral_df$place_id, estab_funeral_df$formatted_address , .keep_all = TRUE)
+estab_funeral_df <- estab_funeral_df %>% filter(is.na(estab_funeral_df$permanently_closed ))
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_funeral_sf <- st_as_sf(estab_funeral_df, coords = c("lng","lat"), crs = 'WGS84')
 estab_funeral_sf <- st_transform(estab_funeral_sf, crs = st_crs(geo_prov))
-rm(estab_funeral_df)
 
 #drop points outside Canadian provinces 
 estab_funeral_sf <- st_intersection(estab_funeral_sf,geo_prov%>%filter(PRUID < 60))
@@ -217,13 +215,13 @@ estab_mech_df <- estab_mech_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_mech_df <- distinct(estab_mech_df)%>%
-  filter(is.na(permanently_closed))
+estab_mech_df <- estab_mech_df %>% distinct(estab_mech_df$place_id, estab_mech_df$formatted_address , .keep_all = TRUE)
+estab_mech_df <- estab_mech_df %>% filter(is.na(estab_mech_df$permanently_closed ))
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')
 estab_mech_sf <- st_transform(estab_mech_sf, crs = st_crs(geo_prov))
-rm(estab_mech_df)
+
 
 #drop points outside Canadian provinces 
 estab_mech_sf <- st_intersection(estab_mech_sf,geo_prov%>%filter(PRUID < 60))
