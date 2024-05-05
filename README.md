@@ -46,7 +46,7 @@ Cleandata.R takes output from Getdata.R, combines it with various statistics can
     - Produces: Markets_Data.rts / .csv
     - Define Market  
         -  A Population center (i.e. a contiguous area with a population density of 400 person per square km and with a population 1,000 or more)   
-            plus a 1 km buffer around the population center
+            plus a 1 km buffer around the population center   
         -  Not in a CMA  
         -  whose boundary is 20 km from a CMA  
         -  whose boundary is 10 km from another population center  
@@ -59,9 +59,9 @@ Cleandata.R takes output from Getdata.R, combines it with various statistics can
     - An alterative way to structure the data retrevial is to build the markets first and then call the api for a point that is the centroid of the population center.   
               - This results in many fewer calls (ie cheaper). The downside is you don't get the total number of establishments in CA.    
 
-making tables and figures as in BR 1991.R
-    - Lance's file for analysis 
-    - LANCE ADD DETAILS HERE?
+making tables and figures as in BR 1991.R   
+    - Lance's file for analysis   
+    - Makes tables and figures from Timothy F. Bresnahan and Peter C. Reiss 1991   
   
   Vet_Data_ONsubset.rts    
     - Provides an example of the establishment resukts from the data scrape.   
