@@ -58,6 +58,10 @@ for (i in 1:nrow(sf_points)){
 # write_rds(Dentist_DATA, 'G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\Dentist_DATA.rds')
 # DoNotDeleteData1 <- Dentist_DATA
 
+Dentist_DATA <- folder%>%
+  paste0('\\Data\\Google Data Scrape\\Dentist_DATA.rds')%>%
+  readRDS
+
 ## ------------------ Funeral ------------
 # Collected May 4
 # Nalinda Google payment key
@@ -73,7 +77,11 @@ for (i in 1:nrow(sf_points)){
 #  write_rds(Funeral_DATA, 'G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\Funeral_DATA.rds')
 #  DoNotDeleteData2 <- Funeral_DATA
 
-## ------------------ Funeral ------------
+Funeral_DATA <- folder%>%
+  paste0('\\Data\\Google Data Scrape\\Funeral_DATA.rds')%>%
+  readRDS
+
+## ------------------ Mechanics ------------
 # Collected May 4
 # Nalinda Google payment key
 #  key = ""
@@ -88,14 +96,17 @@ for (i in 1:nrow(sf_points)){
 # write_rds(Mech_DATA, 'G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Data\\Mech_DATA.rds')
 #   DoNotDeleteData3 <- Mech_DATA
 
+Mech_DATA <- folder%>%
+  paste0('\\Data\\Google Data Scrape\\Mech_DATA.rds')%>%
+  readRDS
+
 ##--------------------------------------------------------------------- Clean New & Get Counts Data ------------------------------ ## -----
 
 geo_prov <- folder%>%
   paste0('Data\\ShapeFile_prov\\lpr_000a21a_e.shp')%>%
   read_sf
 
-Markets_Data_moreInd <- Markets_Data %>% 
-  rename( nVets = numberOfEstablishments, nvets_1kmBuffer = numberOfEstablishments_1kmBuffer)
+Markets_Data_moreInd <- Markets_Data 
 
 ##-------------------------- Dentists -------
 
