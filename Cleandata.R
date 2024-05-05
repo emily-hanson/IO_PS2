@@ -89,16 +89,21 @@ estab_df <- estab_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-           change to:
-
-           estab_df%>%
-           filter(!is.na(permanently_clsed))%>%
+estab_df <- estab_df%>%
+           filter(!is.na(permanently_closed))%>%
            group_by(formatted_address)%>%
-           slice_head(n = 1)
+           slice_head(n = 1)%>%
+           ungroup
+
+if(FALSE){
            
 estab_df <- estab_df %>% distinct(estab_df$place_id, .keep_all = TRUE)
 estab_df <- estab_df %>% distinct(estab_df$formatted_address , .keep_all = TRUE)
 estab_df <- estab_df %>% filter(is.na(estab_df$permanently_closed ))
+
+    }
+   
+
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_sf <- st_as_sf(estab_df, coords = c("lng","lat"), crs = 'WGS84')
