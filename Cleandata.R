@@ -150,47 +150,49 @@ rm(markets_exclude_cma)
 markets_desired <- markets%>%filter(! DGUID %in% markets_exclude$DGUID)
 
 ##------Count establishments in each of my markets
-markets_desired <- markets_desired%>%
-  mutate(nVets = st_intersects({.},estab_sf)%>%
-           sapply(function(x) x%>%length))
 
-markets_desired <- markets_desired%>% st_buffer(1000) %>%
-  mutate(nVets_1kmBuffer = st_intersects({.},estab_sf)%>%
-           sapply(function(x) x%>%length))
+#get counts
+CountDF <- c(0, 1, 2, 5)%>%
+  map_dfc(function(kmBuffer){
+    
+    markets_desired%>% 
+      st_buffer(kmBuffer * 1000)%>%
+      mutate(!!paste0('nvet_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_sf)%>%
+               sapply(function(x) x%>%length))%>%
+      as_tibble%>%
+      select(DGUID, matches('nvet_'))
+    
+    
+  })%>%
+  select(DGUID = DGUID...1,
+         matches('nvets'))
 
-# alt buffers 
-markets_desired <- markets_desired%>% st_buffer(2000) %>%
-  mutate(nVets_2kmBuffer = st_intersects({.},estab_sf)%>%
-           sapply(function(x) x%>%length))
-
-markets_desired <- markets_desired%>% st_buffer(5000) %>%
-  mutate(nVets_5kmBuffer = st_intersects({.},estab_sf)%>%
-           sapply(function(x) x%>%length))
-
+Markets_Data <- markets_desired%>%
+  left_join(CountDF, by = 'DGUID')
 
 ##------My Market should now have all the data needed for market analysis
-write_rds(markets_desired, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data.rds")
-markets_desired_csv <- as.data.frame(markets_desired) %>% select(-geometry) %>% apply(2, as.character)
-write.csv(markets_desired_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_csv.csv")
+write_rds(Markets_Data , "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data.rds")
+Markets_Data_csv <- as.data.frame(Markets_Data) %>% select(-geometry) %>% apply(2, as.character)
+write.csv(Markets_Data_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_csv.csv")
 
 ## ------------------------------------------ Checks, Excluded Market Statistics, Pretty Pictures ------------------------------------- ##-----
 
 # Count establishments total and thrown away
 
-count_est_exclude1 <- st_intersects(st_union(geo_cma_buffer),estab_sf)
-count_est_exclude1 <- length(count_est_exclude1[[1]])
-
-count_est_exclude2 <- markets_exclude%>%
-    filter(exclude_reason == "Within 10km of another population center" ) %>%
-    st_union()%>%
-    st_intersects(estab_sf)
-count_est_exclude2 <- length(count_est_exclude2[[1]])
-
-# count est outside CMA buffer and outside my markets 
-nrow(estab_sf) - count_est_exclude1 - count_est_exclude2 - sum(markets_desired$numberOfEstablishments_1kmBuffer)
-
-# Count markets excluded by reason 
-markets_exclude%>%group_by(exclude_reason)%>%summarise(n(), nrow({.}))
+# count_est_exclude1 <- st_intersects(st_union(geo_cma_buffer),estab_sf)
+# count_est_exclude1 <- length(count_est_exclude1[[1]])
+# 
+# count_est_exclude2 <- markets_exclude%>%
+#     filter(exclude_reason == "Within 10km of another population center" ) %>%
+#     st_union()%>%
+#     st_intersects(estab_sf)
+# count_est_exclude2 <- length(count_est_exclude2[[1]])
+# 
+# # count est outside CMA buffer and outside my markets 
+# nrow(estab_sf) - count_est_exclude1 - count_est_exclude2 - sum(markets_desired$numberOfEstablishments_1kmBuffer)
+# 
+# # Count markets excluded by reason 
+# markets_exclude%>%group_by(exclude_reason)%>%summarise(n(), nrow({.}))
 
 
 

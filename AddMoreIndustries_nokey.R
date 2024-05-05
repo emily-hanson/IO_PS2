@@ -142,21 +142,25 @@ estab_dentist_sf <- st_transform(estab_dentist_sf, crs = st_crs(geo_prov))
 #drop points outside Canadian provinces 
 estab_dentist_sf <- st_intersection(estab_dentist_sf,geo_prov%>%filter(PRUID < 60))
 
+#get counts
+dentistCountDF <- c(0, 1, 2, 5)%>%
+  map_dfc(function(kmBuffer){
+    
+    Markets_Data_moreInd%>% 
+      st_buffer(kmBuffer * 1000)%>%
+      mutate(!!paste0('ndentist_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_dentist_sf)%>%
+               sapply(function(x) x%>%length))%>%
+      as.tibble%>%
+      select(DGUID, matches('ndentist_'))
+    
+    
+  })%>%
+  select(DGUID = DGUID...1,
+         matches('ndentist'))
+
 Markets_Data_moreInd <- Markets_Data_moreInd%>%
-  mutate(nDentist = st_intersects({.},estab_dentist_sf)%>%
-           sapply(function(x) x%>%length))
+  left_join(dentistCountDF, by = 'DGUID')
 
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(1000) %>%
-  mutate(nDentists_1kmBuffer = st_intersects({.},estab_dentist_sf)%>%
-           sapply(function(x) x%>%length))
-
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(2000) %>%
-  mutate(nDentists_2kmBuffer = st_intersects({.},estab_dentist_sf)%>%
-           sapply(function(x) x%>%length))
-
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(5000) %>%
-  mutate(nDentists_5kmBuffer = st_intersects({.},estab_dentist_sf)%>%
-           sapply(function(x) x%>%length))
 
 ##-------------------------- Funeral ------
 
@@ -193,21 +197,25 @@ estab_funeral_sf <- st_transform(estab_funeral_sf, crs = st_crs(geo_prov))
 #drop points outside Canadian provinces 
 estab_funeral_sf <- st_intersection(estab_funeral_sf,geo_prov%>%filter(PRUID < 60))
 
+#get counts
+funeralCountDF <- c(0, 1, 2, 5)%>%
+  map_dfc(function(kmBuffer){
+    
+    Markets_Data_moreInd%>% 
+      st_buffer(kmBuffer * 1000)%>%
+      mutate(!!paste0('nfuneral_', kmBuffer, 'kmBuffer') := st_intersects({.},estab_funeral_sf)%>%
+               sapply(function(x) x%>%length))%>%
+      as.tibble%>%
+      select(DGUID, matches('nfuneral_'))
+    
+    
+  })%>%
+  select(DGUID = DGUID...1,
+         matches('nfuneral'))
+
 Markets_Data_moreInd <- Markets_Data_moreInd%>%
-  mutate(nfuneral = st_intersects({.},estab_funeral_sf)%>%
-           sapply(function(x) x%>%length))
+  left_join(funeralCountDF, by = 'DGUID')
 
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(1000) %>%
-  mutate(nfunerals_1kmBuffer = st_intersects({.},estab_funeral_sf)%>%
-           sapply(function(x) x%>%length))
-
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(2000) %>%
-  mutate(nfunerals_2kmBuffer = st_intersects({.},estab_funeral_sf)%>%
-           sapply(function(x) x%>%length))
-
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(5000) %>%
-  mutate(nfunerals_5kmBuffer = st_intersects({.},estab_funeral_sf)%>%
-           sapply(function(x) x%>%length))
 
 ##-------------------------- Mech ------
 
@@ -243,54 +251,10 @@ estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')
 estab_mech_sf <- st_transform(estab_mech_sf, crs = st_crs(geo_prov))
 
 
-          if(FALSE){
+#drop points outside Canadian provinces 
+estab_mech_sf <- st_intersection(estab_mech_sf,geo_prov%>%filter(PRUID < 60))
 
-            Mech_DATA <- "C:\\Users\\lance\\Downloads\\Mech_DATA.rds"%>%
-  readRDS
-
-Markets_Data_moreInd <-"C:\\Users\\lance\\Downloads\\Markets_Data.rds"%>%
-  readRDS
-
-
-geo_prov <- "C:\\Users\\lance\\Downloads\\ShapeFile_prov\\ShapeFile_prov\\lpr_000a21a_e.shp"%>%
-  read_sf
-
-estab_mech_df <- Mech_DATA%>%
-  map_dfr(function(x) x$results)
-
-# Simple data cleaning 
-estab_mech_df$geometry <- estab_mech_df$geometry$location[,c('lat', 'lng')]
-
-estab_mech_df <- Mech_DATA%>%
-    map_dfr(function(x) x$results)
-  
-# Simple data cleaning 
-estab_mech_df$geometry <- estab_mech_df$geometry$location[,c('lat', 'lng')]
-estab_mech_df <- estab_mech_df%>%
-  group_by(place_id)%>%
-  transmute(formatted_address, 
-            lat = geometry$lat, 
-            lng = geometry$lng,
-            name, 
-            business_status, 
-            types = types%>%
-              unlist%>%
-              paste0(collapse = '___'), 
-            permanently_closed)%>%
-  ungroup%>%
-  filter(is.na(permanently_closed))%>%
-  group_by(formatted_address)%>%
-  slice_head(n = 1)%>%
-  group_by(place_id)%>%
-  slice_head(n = 1)%>%
-  ungroup  
-
-estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')%>%
-  st_transform(estab_mech_sf, crs = st_crs(geo_prov))%>%
-  st_intersection(geo_prov%>%
-                    filter(PRUID < 60))
-
-
+#get counts
 mechCountDF <- c(0, 1, 2, 5)%>%
   map_dfc(function(kmBuffer){
     
@@ -300,7 +264,7 @@ mechCountDF <- c(0, 1, 2, 5)%>%
                sapply(function(x) x%>%length))%>%
       as.tibble%>%
       select(DGUID, matches('nmech_'))
-      
+    
     
   })%>%
   select(DGUID = DGUID...1,
@@ -309,28 +273,7 @@ mechCountDF <- c(0, 1, 2, 5)%>%
 Markets_Data_moreInd <- Markets_Data_moreInd%>%
   left_join(mechCountDF, by = 'DGUID')
 
-
-                  }
-
-#drop points outside Canadian provinces 
-estab_mech_sf <- st_intersection(estab_mech_sf,geo_prov%>%filter(PRUID < 60))
-
-Markets_Data_moreInd <- Markets_Data_moreInd%>%
-  mutate(nmech = st_intersects({.},estab_mech_sf)%>%
-           sapply(function(x) x%>%length))
-
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(1000) %>%
-  mutate(nmechs_1kmBuffer = st_intersects({.},estab_mech_sf)%>%
-           sapply(function(x) x%>%length))
-
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(2000) %>%
-  mutate(nmechs_2kmBuffer = st_intersects({.},estab_mech_sf)%>%
-           sapply(function(x) x%>%length))
-
-Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(5000) %>%
-  mutate(nmechs_5kmBuffer = st_intersects({.},estab_mech_sf)%>%
-           sapply(function(x) x%>%length))
-
+# export
 mrk_csv <- as.data.frame(Markets_Data_moreInd) %>% select(-geometry) %>% apply(2, as.character)
 write.csv(mrk_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_moreInd.csv")
 
