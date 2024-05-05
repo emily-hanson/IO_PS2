@@ -5,14 +5,18 @@ Here we house the R scripts, the API call output data, latex files for collabora
 File Directory:  
     R scripts:  
         Getdata_nokey.R    
-        Cleandata.R      
+        Cleandata.R    
+        AddMoreIndustry_nokey.R
+        making tables and figures as in BR 1991.R 
     Data:  
-        Vet_Data_canada.rds  
-        Vet_Data_ONsubset.rts
-        Markets_Data.rts
-    Latex Files:  
+        Markets_Data.rts (and Markets_Data_csv.csv)  
+        Market_Data_moreInd.csv (.rts available by request)   
+        Vet_Data_ONsubset.rts  
+    Latex Files:    
         writeup.tex  
-        moonoply.bib   
+        moonoply.bib  
+    Other Result Files:
+        Market_Map_png (shows vet counts)
   
 Available Online:   
     Province Shape File                  lpr_000a16a_e.shp  
@@ -39,7 +43,7 @@ Getdata_nokey.R is code that calls the Google API to pull a list of all establis
     - There are a total of 3251 of these points  
 
 Cleandata.R takes output from Getdata.R, combines it with various statistics canada shape files, and market characteristics at the population center level  
-    - Produces: Markets_Data.rts
+    - Produces: Markets_Data.rts / .csv
     - Define Market  
         -  A Population center (i.e. a contiguous area with a population density of 400 person per square km and with a population 1,000 or more)   
             plus a 1 km buffer around the population center
@@ -49,6 +53,16 @@ Cleandata.R takes output from Getdata.R, combines it with various statistics can
     - Use data from API pull to check how many establishments are in that market. Both are shape files. Markets are polygons, establishments are points  
     - More about population centres here: https://www12.statcan.gc.ca/census-recensement/2021/ref/dict/az/Definition-eng.cfm?ID=geo049a   
   
+  AddMoreIndustry_nokey.R      
+    - Produces: Market_Data_moreInd.csv    
+    - Using markets defined in Ckeandata.R, scrapes data from Google API for more industries and adds those counts to the markets file   
+    - An alterative way to structure the data retrevial is to build the markets first and then call the api for a point that is the centroid of the population center.   
+              - This results in many fewer calls (ie cheaper). The downside is you don't get the total number of establishments in CA.    
+
+making tables and figures as in BR 1991.R
+    - Lance's file for analysis 
+    - LANCE ADD DETAILS HERE?
   
-Notes:  
-    - An alterative way to structure the data retrevial would be to build the markets first and then call the api for a point that is the centroid of the population center. This would result in many fewer calls (which would be cheaper). The downside is you don't get to know the total number of establishments or run robustness for adding buffers on the geegraphic bounds of the market.  
+  Vet_Data_ONsubset.rts    
+    - Provides an example of the establishment resukts from the data scrape.   
+    - Vet data results for all of CA and Market results for Funeral Homes and Dentists is available upon request.  
