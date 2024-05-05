@@ -138,8 +138,10 @@ estab_dentist_df <- estab_dentist_df%>%
 
 # drop entries: duplicates and permanently closed establishments
 estab_dentist_df <- estab_dentist_df%>%
-  filter(!is.na(permanently_closed))%>%
+  filter(is.na(permanently_closed))%>%
   group_by(formatted_address)%>%
+  slice_head(n = 1)%>%
+  group_by(place_id)%>%
   slice_head(n = 1)%>%
   ungroup
 
@@ -191,10 +193,11 @@ estab_funeral_df <- estab_funeral_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-# drop entries: duplicates and permanently closed establishments
 estab_funeral_df <- estab_funeral_df%>%
-  filter(!is.na(permanently_closed))%>%
+  filter(is.na(permanently_closed))%>%
   group_by(formatted_address)%>%
+  slice_head(n = 1)%>%
+  group_by(place_id)%>%
   slice_head(n = 1)%>%
   ungroup
 
