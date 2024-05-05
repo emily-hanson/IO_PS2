@@ -129,9 +129,11 @@ estab_dentist_df <- estab_dentist_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_dentist_df <- estab_dentist_df %>% distinct(estab_dentist_df$place_id, .keep_all = TRUE)
-estab_dentist_df <- estab_dentist_df %>% distinct(estab_dentist_df$formatted_address , .keep_all = TRUE)
-estab_dentist_df <- estab_dentist_df %>% filter(is.na(estab_dentist_df$permanently_closed ))
+estab_dentist_df <- estab_dentist_df%>%
+  filter(!is.na(permanently_closed))%>%
+  group_by(formatted_address)%>%
+  slice_head(n = 1)%>%
+  ungroup
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_dentist_sf <- st_as_sf(estab_dentist_df, coords = c("lng","lat"), crs = 'WGS84')
@@ -177,9 +179,12 @@ estab_funeral_df <- estab_funeral_df%>%
   ungroup
 
 # drop entries: duplicates and permanently closed establishments
-estab_funeral_df <- estab_funeral_df %>% distinct(estab_funeral_df$place_id, .keep_all = TRUE)
-estab_funeral_df <- estab_funeral_df %>% distinct(estab_funeral_df$formatted_address , .keep_all = TRUE)
-estab_funeral_df <- estab_funeral_df %>% filter(is.na(estab_funeral_df$permanently_closed ))
+# drop entries: duplicates and permanently closed establishments
+estab_funeral_df <- estab_funeral_df%>%
+  filter(!is.na(permanently_closed))%>%
+  group_by(formatted_address)%>%
+  slice_head(n = 1)%>%
+  ungroup
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_funeral_sf <- st_as_sf(estab_funeral_df, coords = c("lng","lat"), crs = 'WGS84')
@@ -204,9 +209,6 @@ Markets_Data_moreInd <- Markets_Data_moreInd%>% st_buffer(5000) %>%
   mutate(nfunerals_5kmBuffer = st_intersects({.},estab_funeral_sf)%>%
            sapply(function(x) x%>%length))
 
-mrk_csv <- as.data.frame(Markets_Data_moreInd) %>% select(-geometry) %>% apply(2, as.character)
-write.csv(mrk_csv, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data_moreInd.csv")
-
 ##-------------------------- Mech ------
 
 estab_mech_df <- Mech_DATA%>%
@@ -227,10 +229,11 @@ estab_mech_df <- estab_mech_df%>%
             permanently_closed)%>%
   ungroup
 
-# drop entries: duplicates and permanently closed establishments
-estab_mech_df <- estab_mech_df %>% distinct(estab_mech_df$place_id, .keep_all = TRUE)
-estab_mech_df <- estab_mech_df %>% distinct(estab_mech_df$formatted_address , .keep_all = TRUE)
-estab_mech_df <- estab_mech_df %>% filter(is.na(estab_mech_df$permanently_closed ))
+estab_mech_df <- estab_mech_df%>%
+  filter(!is.na(permanently_closed))%>%
+  group_by(formatted_address)%>%
+  slice_head(n = 1)%>%
+  ungroup
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_mech_sf <- st_as_sf(estab_mech_df, coords = c("lng","lat"), crs = 'WGS84')

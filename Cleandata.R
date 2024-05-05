@@ -18,10 +18,10 @@ sf_use_s2(FALSE) #helps st_intersection not throw errors
 ## ----------------------------------------------------------- IMPORT ---------------------------------------- ##----
 
 ##------Import Establishment Data (extracted from Getdata.R)
-EstablishmentData_ON <- folder%>%
-    paste0('Vet_Data_canada.rds')%>%
+Vet_DATA<- folder%>%
+    paste0('\\Data\\Google Data Scrape\\Vet_Data_canada.rds')%>%
     readRDS
-estab_df <- EstablishmentData_ON%>%
+estab_df <- Vet_DATA%>%
     map_dfr(function(x) x$results)
 #rm(EstablishmentData_ON)
 
@@ -90,25 +90,14 @@ estab_df <- estab_df%>%
 
 # drop entries: duplicates and permanently closed establishments
 estab_df <- estab_df%>%
-           filter(!is.na(permanently_closed))%>%
-           group_by(formatted_address)%>%
-           slice_head(n = 1)%>%
-           ungroup
-
-if(FALSE){
-           
-estab_df <- estab_df %>% distinct(estab_df$place_id, .keep_all = TRUE)
-estab_df <- estab_df %>% distinct(estab_df$formatted_address , .keep_all = TRUE)
-estab_df <- estab_df %>% filter(is.na(estab_df$permanently_closed ))
-
-    }
-   
-
+  filter(!is.na(permanently_closed))%>%
+  group_by(formatted_address)%>%
+  slice_head(n = 1)%>%
+  ungroup
 
 # Make into shapefile using PCS_Lambert_Conformal_Conic reference system
 estab_sf <- st_as_sf(estab_df, coords = c("lng","lat"), crs = 'WGS84')
 estab_sf <- st_transform(estab_sf, crs = st_crs(geo_prov))
-rm(estab_df)
 
 #drop points outside Canadian provinces 
 estab_sf <- st_intersection(estab_sf,geo_prov%>%filter(PRUID < 60))
@@ -162,12 +151,22 @@ markets_desired <- markets%>%filter(! DGUID %in% markets_exclude$DGUID)
 
 ##------Count establishments in each of my markets
 markets_desired <- markets_desired%>%
-  mutate(numberOfEstablishments = st_intersects({.},estab_sf)%>%
+  mutate(nVets = st_intersects({.},estab_sf)%>%
            sapply(function(x) x%>%length))
 
 markets_desired <- markets_desired%>% st_buffer(1000) %>%
-  mutate(numberOfEstablishments_1kmBuffer = st_intersects({.},estab_sf)%>%
+  mutate(nVets_1kmBuffer = st_intersects({.},estab_sf)%>%
            sapply(function(x) x%>%length))
+
+# alt buffers 
+markets_desired <- markets_desired%>% st_buffer(2000) %>%
+  mutate(nVets_2kmBuffer = st_intersects({.},estab_sf)%>%
+           sapply(function(x) x%>%length))
+
+markets_desired <- markets_desired%>% st_buffer(5000) %>%
+  mutate(nVets_5kmBuffer = st_intersects({.},estab_sf)%>%
+           sapply(function(x) x%>%length))
+
 
 ##------My Market should now have all the data needed for market analysis
 write_rds(markets_desired, "G:\\My Drive\\0_Western2ndYear\\Class_IO_Daniel\\PS 2\\Untitled folder\\Markets_Data.rds")
@@ -192,24 +191,6 @@ nrow(estab_sf) - count_est_exclude1 - count_est_exclude2 - sum(markets_desired$n
 
 # Count markets excluded by reason 
 markets_exclude%>%group_by(exclude_reason)%>%summarise(n(), nrow({.}))
-
-# alt buffers 
-markets_desired <- markets_desired%>% st_buffer(2000) %>%
-  mutate(numberOfEstablishments_2kmBuffer = st_intersects({.},estab_sf)%>%
-           sapply(function(x) x%>%length))
-
-markets_desired <- markets_desired%>% st_buffer(5000) %>%
-  mutate(numberOfEstablishments_5kmBuffer = st_intersects({.},estab_sf)%>%
-           sapply(function(x) x%>%length))
-
-
-geo_prov%>%
-  filter(PRUID < 60)%>%
-  ggplot()+
-  geom_sf()+
-  geom_sf(data = markets_desired%>%
-            mutate(Veterinarians= factor(numberOfEstablishments)),
-          aes(col = Veterinarians), size = 2) 
 
 
 
