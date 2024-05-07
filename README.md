@@ -9,7 +9,7 @@ File Directory:
         AddMoreIndustry_nokey.R
         making tables and figures as in BR 1991.R 
     Data:  
-        Markets_Data.rts (and Markets_Data_csv.csv)  
+        Markets_Data.rts
         Market_Data_moreInd.csv (.rts available by request)   
         Vet_Data_ONsubset.rts  
     Latex Files:    
@@ -49,13 +49,13 @@ Cleandata.R takes output from Getdata.R, combines it with various statistics can
             plus a 1 km buffer around the population center   
         -  Not in a CMA  
         -  whose boundary is 20 km from a CMA  
-        -  whose boundary is 10 km from another population center  
-    - Use data from API pull to check how many establishments are in that market. Both are shape files. Markets are polygons, establishments are points  
+        -  whose boundary is 10 km from another population center   
     - More about population centres here: https://www12.statcan.gc.ca/census-recensement/2021/ref/dict/az/Definition-eng.cfm?ID=geo049a   
   
   AddMoreIndustry_nokey.R      
     - Produces: Market_Data_moreInd.csv    
     - Using markets defined in Ckeandata.R, scrapes data from Google API for more industries and adds those counts to the markets file   
+    - Use data from API pull to check how many establishments are in that market. Both are shape files. Markets are polygons, establishments are points    
     - An alterative way to structure the data retrevial is to build the markets first and then call the api for a point that is the centroid of the population center.   
               - This results in many fewer calls (ie cheaper). The downside is you don't get the total number of establishments in CA.    
 
