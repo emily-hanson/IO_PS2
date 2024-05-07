@@ -7,16 +7,16 @@ File Directory:
         Getdata_nokey.R    
         Cleandata.R    
         AddMoreIndustry_nokey.R
-        making tables and figures as in BR 1991.R 
+        making tables and figures as in BR 1991.R   
     Data:  
         Markets_Data.rts
         Market_Data_moreInd.csv (.rts available by request)   
         Vet_Data_ONsubset.rts  
     Latex Files:    
         writeup.tex  
-        moonoply.bib  
+        writeup_bib.bib  
     Other Result Files:
-        Market_Map_png (shows vet counts)
+        Various Figure and Table files
   
 Available Online:   
     Province Shape File                  lpr_000a16a_e.shp  
