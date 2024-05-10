@@ -63,6 +63,58 @@ In Canada, dentists control their own prices. However, provincial and territoria
 
 The menus of services provided by general dentists are fairly homogeneous. While dental clinics may differ to some extent in the services they offer if dentists have additional qualifications (e.g., orthodontic services), dental examinations and basic dental services (e.g., teeth cleanings, fillings, simple tooth extractions) are commonly provided. While in reality it is possible that dentists differ in quality of their service, we assume services are homogeneous across dentists. This is likely not a strong assumption, as all dentists in Canada face the same licensing requirements in order to practice and, as a self-regulated profession, there are standards of competency and conduct that must be met in order to continue practicing.
 
+%%%%%%%%%%%% Emily talks about data collection in here %%%%%%%%%%%%%%%%%
+
+Figures \ref{figure1} and \ref{figure2} show histograms of the town populations and dental clinics (establishments) counts in markets, respectively, corresponding to markets. As previously mentioned, these towns are quite small; Figure \ref{figure1} shows that the largest town in the sample has a population of only around 10,000 people and most towns have populations of less than 5000 people. Furthermore, Figure \ref{figure1} shows that the most frequent market structure for dental clinics is a monopoly, which occurs for over sixty markets in our sample. Duopolies and oligopolies with three dental clinics are the next most frequent market structures in our sample.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\linewidth]{figure2.png}
+    \caption{Histogram of Town Populations}
+    \label{figure1}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\linewidth]{table2Figure.png}
+    \caption{Histogram of Dental Clinic Counts}
+    \label{figure2}
+\end{figure}
+
+Table \ref{table1} displays descriptive statistics for market and demographic characteristics of towns in our sample. We can see that there is quite a bit of heterogeneity among towns in some of these characteristics. For example, the standard deviations and ranges of population percentage change, dwellings per kilometre, and average total income in 2020 suggest considerable differences in these characteristics across towns in the sample.
+
+As in Bresnahan and Reiss (1991), we split these characteristics into those that determine market size and those that shift demand and cost. For market size determinants, we use total population, number of dwelling owners, population percentage change, and the percentage of individuals who commute outside the market for work. For demand shifters, we include all the demographic characteristics. For cost and demand shifters, we include the number of dwellings per kilometre, the median value of dwellings, and the regional dummies. The idea of the former two shifters is to get at the cost of renting space for dental clinics. For example, many dwellings per kilometre may indicate that space is scarce, driving up rental prices. Notably, both of these variables are related to living spaces, so we must assume that the values/prices of living spaces are correlated to the value/prices of commercial spaces. Furthermore, we include regional dummies in the demand and cost shifters to get at regional variation in both demand and the costs that dental clinics face. For example, there could be regional differences in labour markets that affect the wages dentists must pay to dental assistants and dental hygienists. Inclusion of regional dummies is also consistent with the provincial and territorial fee guides that are based on costs that dentists in respective provinces/territories face.
+
+\begin{table}[ht]
+\centering
+\caption{Descriptive statistics for market and demographic characteristics}
+\label{table1}
+\begin{tabular}{@{}lllllll@{}}
+\toprule
+Variable & Mean & Std. dev. & Min & Max & Frequency \\ \midrule
+\textit{Market characteristics} & & & & & \\
+\# Dental clinics & 2.63 & 2.37 & 0 & 18 &  \\
+Total population & 3.19 & 2.20 & 1.01 & 9.97 & \\
+Dwelling owners (1000s) & 0.93 & 0.62 & 0.035 & 3.09 & \\
+Population \% change (2016 to 2021) & 0.006 &	7.81 & -22.5 & 30.9 & \\
+\% Commute outside market & 0.25 & 0.16 & 0.02 & 0.76 & \\
+Dwellings per km & 418.56 &	150.18 & 107.46 & 1037.29 & \\
+Median value of dwellings (\$1000s) & 248.37 & 144.79 &	50 & 1290 & \\ 
+\textit{Demographic characteristics} & & & & & \\
+Senior (65+) population & 24.91 & 8.49 & 2.70 & 54.60 & \\
+Average \# children in families with children & 1.79 & 0.20 & 1.30 & 3 & \\
+Average total income in 2020 (\$1000s) & 48.66 & 8.06 & 33.32 & 98.3 & \\
+\% Has at least high school diploma & 0.77 & 0.083 & 0.37 &	0.96 & \\
+Unemployed population (1000s) & 0.15 & 0.14 & 0 & 1.31 & \\
+\textit{Regional dummies} & & & & & \\
+Atlantic & & & & & 31 \\
+Quebec & & & & & 35 \\
+Ontario & & & & & 34 \\
+Prairies & & & & & 94 \\
+British Columbia & & & & & 22 \\ \bottomrule
+\end{tabular}
+\end{table}
+
 \section{Model and Results}
 
 
