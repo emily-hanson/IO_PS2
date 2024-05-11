@@ -309,38 +309,26 @@ In this paper, we apply the analysis of market concentration and competition of 
 
 \newpage
 \section*{Appendix}
-\subsection*{Data Collection Process}
-Emilt work in progress
+\subsection*{Data Collection Process \& Industry Selection}
+Additional details on the data collection and the code used is available on \href{https://github.com/emily-hanson/IO_PS2/tree/Submission}{GitHub}.
 
-\begin{table}[h]  
-\begin{threeparttable}
-\caption{Market and Businesses Counts} % title name of the table  
-\centering % centering table  
-\begin{tabular}{l c c } % creating 10 columns  
-\hline\hline   
- Geography & Population Centres & Veterinarian Businesses   
-\\ [0.5ex]  
-\hline   
-% Entering 1st row  
-Canadian Provinces & 1014 & 1929 \\
-Within CSA or surrounding 20km & 737 & 1573 \\
-Within 10km of other Population Centre & 42 & 16 \\
-Remaining Population Centres & 235 & 114 \\
+Throughout this process there was a bit of debate on what industry to use. Initially our plan was to use veterinarian data, then we decided to collect data from a few additional industries: mechanics, funeral homes, and dentists. 
 
-Remaining PCs and surrounding 1km* & 235 & 186 \\
+There were two data collection approaches used for collecting establishment data. Both use calls to the google places API. A call consists of a search term, a center point latitude and longitude, and a radius. 
 
-Remaining PCs and surrounding 2km  & 235 & 200 \\
+In the \textit{over grid} method, we called the API over a grid of points. The maximum radius of a call is 50 kilometers. So a grid of points less than 50,000 kilometers across was created. Specifically how far apart these points are apart various because the further North a point is, the closer longitudinal lines are. This method has the advantages of potentially collecting all the establishment data for Canada. However, the method uses many more calls than necessary. This method was used to collect the vet data. 
 
-Remaining PCs and surrounding 5km  & 235 & 209 \\
+In the \textit{by markets} method, we call the API once for each population centre identify as a market in our sample. The latitude and longitude of the call is the centre of the polygon that is the geometric mapping of the population centre. We use a radius that is the minimum bounding circle for the geographically largest population centre in our market list, plus a 5 kilometer buffer. This method was used to collect the mechanics, funeral homes, and dentists.
 
-% [1ex] adds vertical space  
-\hline % inserts single-line  
-\end{tabular}  
-\begin{tablenotes}
-    \small  *This set of population centres including 186 veterinarian businesses was chosen for analysis. 
-\end{tablenotes}
-\end{threeparttable}
-\end{table}  
+An additional advantage to the by markets method is that the return data of the API always truncates results to 20 establishments. This means that the over grid method may under count the number of establishments in areas with high numbers of establishments. With the by markets method, we knew any counts of twenty establishments indicated 20 or more establishments. However this was not an issue in the dentists data. 
+
+
+Data sources include shape files for population centres, census metropolitan areas, and provinces \cite{GeoData},  market characteristics of population centres \cite{PopData}, and Google places API \cite{google}. 
+
+It is possible that scraping data like this is a violation of terms and conditions; although, it may not be if we were only to store the total establishment counts. If this method were to be implemented again or the data here was to be used to publish, we probably need to consult with someone who knows more about this and do more research into the legality ourselves. 
+
+Generally, making a google places API call as we do in our data collection cost money. We got around this because the first time you turn on developer mode for google's API, you get \$400 in free credit. We used a combination of this free credit from Emily, Shuning, and Nalinda's accounts. 
+
 
 
 
