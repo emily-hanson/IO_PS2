@@ -1,4 +1,4 @@
-Main is the mess hub for all our collaboration. Don't try to sort it all out from here.   
+Main is the mess hub for all our collaboration. Don't try to sort it all out from here. Instead see the submission tree.     
 
 For a cleaned page with only the details you need, please see:    
 
