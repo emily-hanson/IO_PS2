@@ -65,12 +65,41 @@ The menus of services provided by general dentists are fairly homogeneous. While
 
 \subsection{Defining Markets}
 
-EMILY Work in porgress
+In order to satisfy the requirements of independent markets, we follow an approach similar to Bresnahan and Reiss using smaller town far enough away from larger cities and other small towns \citep{BresReiss}. In Canada, an area with a population density of 400 person per square kilometers and with a population 1,000 or more is classified as a population centre (\cite{popCenter}). We isolated our analysis to population centers that where outside and at least 20 kilometers from a census metropolitan area. Additionally, we excluded any population centre that was within 10 kilometers of another population centre. Throughout the paper, we use the word ``town" to refer to these small population centres. 
 
-In order to satisfy the requirements of independent markets, we follow an approach similar to Bresnahan and Reiss using smaller town far enough away from larger cities and other small towns \citep{BresReiss}. 
-In Canada, a loca
+After defining these towns as our set of markets, we collect data on the number of dentists in these markets by making a google places API call for each market. Details of this are outlines in the appendix. 
 
-Our analysis focuses on population centers sufficently  
+In order to ensure we captured all the relevant establishments in the market, we included establishments within the town or within a one kilometer buffer zone around the town. As shown in Table \ref{MrkCounts}, adding this buffer includes an addition 53 dentists in our markets, increasing the total number of establishments from 520 to 573.  Adding an additional kilometer to this buffer would increase the number of dentists by 13. Adding a total of five kilometers increases the total number of dentists to 594. If we were to improve this analysis for publication, I would consider dropping the markets with these 21 outlying establishments (15 markets) with dentists inside this 2 to 5 kilometer region. 
+
+\begin{table} 
+\begin{threeparttable}
+\caption{Markets and Dentists Counts} % title name of the table  
+\label{MrkCounts}
+\centering % centering table  
+\begin{tabular}{l c c } % creating 10 columns  
+\hline\hline   
+ Geography & Population Centres & Dentists   
+\\ [0.5ex]  
+\hline   
+% Entering 1st row  
+Within Canadian Provinces & 1014 &  -\\
+Within CSA or surrounding 20km & 737 & -  \\
+Within 10km of other Population Centre & 42 & - \\
+Towns included in Analysis  & 235 & 520 \\
+
+Towns included and surrounding 1km* & 235 & 573 \\
+
+Towns included and surrounding 2km  & 235 & 586 \\
+
+Towns included  and surrounding 5km  & 235 & 594 \\
+
+% [1ex] adds vertical space  
+\hline % inserts single-line  
+\end{tabular}  
+    \small  *This set of population centres including 573 dentists was chosen for analysis. 
+\end{threeparttable}
+\end{table}  
+
 
 \subsection{Descriptive Statistics}
 
